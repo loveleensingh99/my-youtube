@@ -48,6 +48,7 @@ interface FeedContextValue {
   channelsStorageDescription: string;
   firebaseConfigured: boolean;
   firebaseSyncActive: boolean;
+  getChannelAvatar: (channelId: string) => string | undefined;
 }
 
 const FeedContext = createContext<FeedContextValue | null>(null);
@@ -75,6 +76,12 @@ export function FeedProvider({ children }: { children: ReactNode }) {
 
     return channels;
   }, [channels, filters.selectedTag]);
+
+  const getChannelAvatar = useCallback(
+    (channelId: string) => channels.find((channel) => channel.id === channelId)?.avatarUrl,
+    [channels],
+  );
+
   const feed = useRSSFeed(channelsToFetch, settings.youtubeApiKey);
   const refreshState = useRefresh({
     settings,
@@ -136,6 +143,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       channelsStorageDescription,
       firebaseConfigured,
       firebaseSyncActive,
+      getChannelAvatar,
     }),
     [
       channels,
@@ -173,6 +181,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       channelsStorageDescription,
       firebaseConfigured,
       firebaseSyncActive,
+      getChannelAvatar,
     ],
   );
 

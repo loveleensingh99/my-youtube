@@ -75,6 +75,7 @@ export async function saveRemoteChannels(
           id: channel.id,
           name: channel.name,
           category: channel.category,
+          ...(channel.avatarUrl ? { avatarUrl: channel.avatarUrl } : {}),
         })),
         updatedAt: serverTimestamp(),
       },

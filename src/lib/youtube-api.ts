@@ -29,11 +29,59 @@ interface PlaylistItemsResponse {
 
 interface ChannelsResponse {
   items?: Array<{
+    id?: string;
+    snippet?: {
+      thumbnails?: {
+        high?: { url?: string };
+        medium?: { url?: string };
+        default?: { url?: string };
+      };
+    };
     contentDetails?: {
       relatedPlaylists?: { uploads?: string };
     };
   }>;
   error?: { message?: string };
+}
+
+function getChannelAvatarUrl(
+  snippet: NonNullable<ChannelsResponse["items"]>[number]["snippet"],
+): string | undefined {
+  return (
+    snippet?.thumbnails?.high?.url ??
+    snippet?.thumbnails?.medium?.url ??
+    snippet?.thumbnails?.default?.url
+  );
+}
+
+export async function fetchChannelAvatars(
+  channelIds: string[],
+  apiKey: string,
+): Promise<Record<string, string>> {
+  const avatars: Record<string, string> = {};
+  const uniqueIds = [...new Set(channelIds.filter(Boolean))];
+
+  for (let index = 0; index < uniqueIds.length; index += 50) {
+    const batch = uniqueIds.slice(index, index + 50);
+    const data = await youtubeGet<ChannelsResponse>(
+      "channels",
+      {
+        part: "snippet",
+        id: batch.join(","),
+      },
+      apiKey,
+    );
+
+    data.items?.forEach((item) => {
+      const channelId = item.id;
+      const avatarUrl = getChannelAvatarUrl(item.snippet);
+      if (channelId && avatarUrl) {
+        avatars[channelId] = avatarUrl;
+      }
+    });
+  }
+
+  return avatars;
 }
 
 interface VideoDetailsItem {

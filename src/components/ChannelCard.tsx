@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronRight, Radio } from "lucide-react";
+import { ChannelAvatar } from "@/components/ChannelAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { ChannelWithStats } from "@/types";
 import { formatPublishedDate } from "@/utils/date";
-import { getChannelInitials } from "@/utils/video";
 
 interface ChannelCardProps {
   channel: ChannelWithStats;
@@ -18,9 +18,13 @@ export function ChannelCard({ channel, onSelect }: ChannelCardProps) {
   const content = (
     <Card className="group p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:shadow-lg hover:shadow-black/20">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-900 text-sm font-semibold text-zinc-100">
-          {getChannelInitials(channel.name)}
-        </div>
+        <ChannelAvatar
+          channelName={channel.name}
+          avatarUrl={channel.avatarUrl}
+          size="lg"
+          rounded="xl"
+          className="bg-gradient-to-br from-zinc-700 to-zinc-900 text-zinc-100"
+        />
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex items-center justify-between gap-3">
             <h3 className="truncate text-lg font-semibold">{channel.name}</h3>

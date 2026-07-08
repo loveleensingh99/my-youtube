@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { enrichChannelAvatars } from "@/app/actions/channels";
 import { defaultChannels } from "@/data/channels";
 import {
   mergeChannels,
@@ -36,6 +37,41 @@ export function useChannels() {
   useEffect(() => {
     channelsRef.current = channels;
   }, [channels]);
+
+  const channelsMissingAvatars = useMemo(
+    () =>
+      channels
+        .filter((channel) => !channel.avatarUrl)
+        .map((channel) => channel.id)
+        .join(","),
+    [channels],
+  );
+
+  useEffect(() => {
+    if (!channelsMissingAvatars) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void enrichChannelAvatars(channelsRef.current).then((enriched) => {
+      if (cancelled) {
+        return;
+      }
+
+      const changed = enriched.some(
+        (channel, index) => channel.avatarUrl !== channelsRef.current[index]?.avatarUrl,
+      );
+
+      if (changed) {
+        setValue(enriched);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [channelsMissingAvatars, setValue]);
 
   useEffect(() => {
     if (!firebaseEnabled || !firebaseSyncActive) {

@@ -1,6 +1,7 @@
 "use server";
 
 import { fetchChannelFeed } from "@/lib/rss";
+import { fetchChannelAvatars } from "@/lib/youtube-api";
 import {
   extractChannelIdFromUrl,
   extractHandleFromUrl,
@@ -8,6 +9,32 @@ import {
   sanitizeChannelName,
 } from "@/lib/youtube-url";
 import type { Channel } from "@/types";
+
+function getYoutubeApiKey(): string | null {
+  return process.env.YOUTUBE_API_KEY?.trim() || null;
+}
+
+export async function enrichChannelAvatars(channels: Channel[]): Promise<Channel[]> {
+  const apiKey = getYoutubeApiKey();
+  if (!apiKey) {
+    return channels;
+  }
+
+  const missingIds = channels.filter((channel) => !channel.avatarUrl).map((channel) => channel.id);
+  if (missingIds.length === 0) {
+    return channels;
+  }
+
+  try {
+    const avatars = await fetchChannelAvatars(missingIds, apiKey);
+    return channels.map((channel) => ({
+      ...channel,
+      avatarUrl: channel.avatarUrl ?? avatars[channel.id],
+    }));
+  } catch {
+    return channels;
+  }
+}
 
 async function fetchChannelIdFromHandle(handle: string): Promise<string | null> {
   const response = await fetch(`https://www.youtube.com/@${handle}`, {
@@ -77,12 +104,24 @@ export async function resolveChannelInput(
 
   const fallbackName = preferredName?.trim() || extractHandleFromUrl(trimmed) || channelId;
   const name = preferredName?.trim() || (await getChannelName(channelId, fallbackName));
+  const apiKey = getYoutubeApiKey();
+  let avatarUrl: string | undefined;
+
+  if (apiKey) {
+    try {
+      const avatars = await fetchChannelAvatars([channelId], apiKey);
+      avatarUrl = avatars[channelId];
+    } catch {
+      avatarUrl = undefined;
+    }
+  }
 
   return {
     channel: {
       id: channelId,
       name,
       category: category.trim() || "General",
+      ...(avatarUrl ? { avatarUrl } : {}),
     },
   };
 }

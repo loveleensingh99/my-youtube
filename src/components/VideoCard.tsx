@@ -3,9 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
+import { ChannelAvatar } from "@/components/ChannelAvatar";
+import { useFeedContext } from "@/components/FeedProvider";
 import type { Settings, Video } from "@/types";
 import { formatDuration, formatPublishedDate, isNewVideo } from "@/utils/date";
-import { getChannelInitials } from "@/utils/video";
 import { cn } from "@/lib/utils";
 
 interface VideoCardProps {
@@ -19,9 +20,11 @@ function VideoCardComponent({
   compactMode = false,
   thumbnailSize = "medium",
 }: VideoCardProps) {
+  const { getChannelAvatar } = useFeedContext();
   const duration = formatDuration(video.durationSeconds);
   const channelProfileHref = video.channelId ? `/channel/${video.channelId}` : null;
   const isNew = isNewVideo(video.publishedAt);
+  const avatarUrl = video.channelId ? getChannelAvatar(video.channelId) : undefined;
 
   return (
     <article className="group">
@@ -55,28 +58,13 @@ function VideoCardComponent({
       </Link>
 
       <div className={cn("flex gap-3 px-3", compactMode ? "py-2" : "py-3")}>
-        {channelProfileHref ? (
-          <Link
-            href={channelProfileHref}
-            className={cn(
-              "mt-0.5 flex shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground transition-colors hover:bg-secondary/80",
-              compactMode ? "h-8 w-8" : "h-9 w-9",
-            )}
-            aria-label={`Open ${video.channelName} channel page`}
-          >
-            {getChannelInitials(video.channelName)}
-          </Link>
-        ) : (
-          <div
-            className={cn(
-              "mt-0.5 flex shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground",
-              compactMode ? "h-8 w-8" : "h-9 w-9",
-            )}
-            aria-hidden
-          >
-            {getChannelInitials(video.channelName)}
-          </div>
-        )}
+        <ChannelAvatar
+          channelName={video.channelName}
+          avatarUrl={avatarUrl}
+          size={compactMode ? "sm" : "md"}
+          href={channelProfileHref}
+          className="mt-0.5 transition-colors hover:opacity-90"
+        />
 
         <div className="min-w-0 flex-1">
           <Link href={`/watch/${video.id}`}>

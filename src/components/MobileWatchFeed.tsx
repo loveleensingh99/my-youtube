@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
+import { ChannelAvatar } from "@/components/ChannelAvatar";
+import { useFeedContext } from "@/components/FeedProvider";
 import { WatchLoadMoreSkeleton } from "@/components/Skeleton";
 import { WatchPlayer } from "@/components/WatchPlayer";
 import { Button } from "@/components/ui/button";
 import type { Video } from "@/types";
 import { formatPublishedDate } from "@/utils/date";
-import { getChannelInitials } from "@/utils/video";
 
 interface MobileWatchFeedProps {
   videos: Video[];
@@ -27,6 +28,7 @@ export function MobileWatchFeed({
   onLoadMore,
 }: MobileWatchFeedProps) {
   const router = useRouter();
+  const { getChannelAvatar } = useFeedContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeVideoId, setActiveVideoId] = useState(initialVideoId);
   const loadMoreLockRef = useRef(false);
@@ -165,9 +167,12 @@ export function MobileWatchFeed({
 
               <div className="shrink-0 bg-black px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-xs font-semibold text-white">
-                    {getChannelInitials(video.channelName)}
-                  </div>
+                  <ChannelAvatar
+                    channelName={video.channelName}
+                    avatarUrl={video.channelId ? getChannelAvatar(video.channelId) : undefined}
+                    size="md"
+                    className="bg-zinc-700 text-white"
+                  />
                   <div className="min-w-0 flex-1">
                     <h1 className="line-clamp-2 text-sm font-semibold text-white">{video.title}</h1>
                     <p className="mt-1 text-xs text-white/70">

@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { ChannelAvatar } from "@/components/ChannelAvatar";
+import { useFeedContext } from "@/components/FeedProvider";
 import { UpNextVideoCard } from "@/components/UpNextVideoCard";
 import { WatchPlayer } from "@/components/WatchPlayer";
 import { Button } from "@/components/ui/button";
 import type { Video } from "@/types";
 import { formatDuration, formatPublishedDate } from "@/utils/date";
-import { getChannelInitials } from "@/utils/video";
 
 interface LongFormWatchProps {
   video: Video;
@@ -17,6 +18,7 @@ interface LongFormWatchProps {
 
 export function LongFormWatch({ video, upNext = [] }: LongFormWatchProps) {
   const router = useRouter();
+  const { getChannelAvatar } = useFeedContext();
   const channelHref = video.channelId ? `/channel/${video.channelId}` : null;
   const duration = formatDuration(video.durationSeconds);
 
@@ -60,9 +62,12 @@ export function LongFormWatch({ video, upNext = [] }: LongFormWatchProps) {
             href={channelHref}
             className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-3 transition-colors hover:bg-white/10"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-sm font-semibold text-white">
-              {getChannelInitials(video.channelName)}
-            </div>
+            <ChannelAvatar
+              channelName={video.channelName}
+              avatarUrl={video.channelId ? getChannelAvatar(video.channelId) : undefined}
+              size="md"
+              className="bg-zinc-700 text-white"
+            />
             <div className="min-w-0">
               <p className="truncate font-medium text-white">{video.channelName}</p>
               <p className="text-xs text-white/60">View channel</p>

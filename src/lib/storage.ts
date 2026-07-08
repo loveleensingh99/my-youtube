@@ -72,6 +72,10 @@ export function normalizeChannels(value: unknown, fallback: Channel[] = defaultC
         typeof item.category === "string" && item.category.trim()
           ? item.category.trim()
           : "General",
+      avatarUrl:
+        typeof item.avatarUrl === "string" && item.avatarUrl.trim()
+          ? item.avatarUrl.trim()
+          : undefined,
     }));
 
   return channels.length > 0 ? channels : fallback;

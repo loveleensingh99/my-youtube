@@ -3,15 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
+import { ChannelAvatar } from "@/components/ChannelAvatar";
+import { useFeedContext } from "@/components/FeedProvider";
 import type { Video } from "@/types";
 import { formatDuration, formatPublishedDate, isNewVideo } from "@/utils/date";
-import { getChannelInitials } from "@/utils/video";
 
 interface UpNextVideoCardProps {
   video: Video;
 }
 
 function UpNextVideoCardComponent({ video }: UpNextVideoCardProps) {
+  const { getChannelAvatar } = useFeedContext();
   const duration = formatDuration(video.durationSeconds);
   const channelProfileHref = video.channelId ? `/channel/${video.channelId}` : null;
   const isNew = isNewVideo(video.publishedAt);
@@ -41,22 +43,13 @@ function UpNextVideoCardComponent({ video }: UpNextVideoCardProps) {
       </Link>
 
       <div className="flex gap-3 px-4 py-3">
-        {channelProfileHref ? (
-          <Link
-            href={channelProfileHref}
-            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-white transition-colors hover:bg-zinc-700"
-            aria-label={`Open ${video.channelName} channel page`}
-          >
-            {getChannelInitials(video.channelName)}
-          </Link>
-        ) : (
-          <div
-            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-white"
-            aria-hidden
-          >
-            {getChannelInitials(video.channelName)}
-          </div>
-        )}
+        <ChannelAvatar
+          channelName={video.channelName}
+          avatarUrl={video.channelId ? getChannelAvatar(video.channelId) : undefined}
+          size="md"
+          href={channelProfileHref}
+          className="mt-0.5 bg-zinc-800 text-white hover:opacity-90"
+        />
 
         <div className="min-w-0 flex-1">
           <Link href={`/watch/${video.id}`}>
