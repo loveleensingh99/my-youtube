@@ -13,6 +13,11 @@ import { getFirebaseSyncKey } from "@/lib/firebase/config";
 
 const PERSONAL_COLLECTION = "personal";
 
+export interface RemoteChannelsSnapshot {
+  channels: Channel[];
+  updatedAt: number;
+}
+
 function personalDocRef() {
   const syncKey = getFirebaseSyncKey();
   const db = getFirebaseDb();
@@ -21,6 +26,15 @@ function personalDocRef() {
   }
 
   return doc(db, PERSONAL_COLLECTION, syncKey);
+}
+
+function getRemoteUpdatedAt(value: unknown): number {
+  if (!value || typeof value !== "object") {
+    return 0;
+  }
+
+  const updatedAt = (value as { toMillis?: () => number }).toMillis?.();
+  return typeof updatedAt === "number" ? updatedAt : 0;
 }
 
 export function mergeChannels(existing: Channel[], incoming: Channel[]): Channel[] {
@@ -34,7 +48,7 @@ export function mergeChannels(existing: Channel[], incoming: Channel[]): Channel
 }
 
 export function subscribeRemoteChannels(
-  onChange: (channels: Channel[]) => void,
+  onChange: (snapshot: RemoteChannelsSnapshot) => void,
   onError?: (error: Error) => void,
 ): Unsubscribe | null {
   const ref = personalDocRef();
@@ -46,12 +60,15 @@ export function subscribeRemoteChannels(
     ref,
     (snapshot) => {
       if (!snapshot.exists()) {
-        onChange([]);
+        onChange({ channels: [], updatedAt: 0 });
         return;
       }
 
       const data = snapshot.data();
-      onChange(normalizeChannels(data.channels, defaultChannels));
+      onChange({
+        channels: normalizeChannels(data.channels, defaultChannels),
+        updatedAt: getRemoteUpdatedAt(data.updatedAt),
+      });
     },
     (error) => {
       onError?.(error);
@@ -61,28 +78,24 @@ export function subscribeRemoteChannels(
 
 export async function saveRemoteChannels(
   channels: Channel[],
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; updatedAt: number } | { ok: false; error: string }> {
   const ref = personalDocRef();
   if (!ref) {
     return { ok: false, error: "Firebase is not configured." };
   }
 
   try {
-    await setDoc(
-      ref,
-      {
-        channels: channels.map((channel) => ({
-          id: channel.id,
-          name: channel.name,
-          category: channel.category,
-          ...(channel.avatarUrl ? { avatarUrl: channel.avatarUrl } : {}),
-        })),
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true },
-    );
+    await setDoc(ref, {
+      channels: channels.map((channel) => ({
+        id: channel.id,
+        name: channel.name,
+        category: channel.category,
+        ...(channel.avatarUrl ? { avatarUrl: channel.avatarUrl } : {}),
+      })),
+      updatedAt: serverTimestamp(),
+    });
 
-    return { ok: true };
+    return { ok: true, updatedAt: Date.now() };
   } catch {
     return { ok: false, error: "Could not save channels to Firebase." };
   }

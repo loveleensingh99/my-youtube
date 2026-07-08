@@ -11,6 +11,7 @@ export const STORAGE_KEYS = {
   selectedTag: "focustube:selected-tag",
   sidebarCollapsed: "focustube:sidebar-collapsed",
   channelsSectionExpanded: "focustube:channels-section-expanded",
+  channelsUpdatedAt: "focustube:channels-updated-at",
 } as const;
 
 export const RSS_BASE_URL =
