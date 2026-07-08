@@ -4,12 +4,11 @@ import { createContext, useCallback, useContext, useMemo, type ReactNode } from 
 import { resolveChannelInput } from "@/app/actions/channels";
 import { useRSSFeed } from "@/hooks/useRSSFeed";
 import { useSettings } from "@/hooks/useSettings";
-import { useWatchHistory } from "@/hooks/useWatchHistory";
 import { useFilters } from "@/hooks/useFilters";
 import { useRefresh } from "@/hooks/useRefresh";
 import { useChannels } from "@/hooks/useChannels";
 import type { ChannelsStorageMode } from "@/lib/channels-store";
-import type { Channel, FeedFilter, Settings, Video, WatchHistoryItem } from "@/types";
+import type { Channel, FeedFilter, Settings, Video } from "@/types";
 
 interface FeedContextValue {
   channels: Channel[];
@@ -36,13 +35,6 @@ interface FeedContextValue {
   updateSettings: (partial: Partial<Settings>) => void;
   resetSettings: () => void;
   settingsHydrated: boolean;
-  watchedIds: Set<string>;
-  markAsWatched: (item: Omit<WatchHistoryItem, "watchedAt">) => void;
-  removeFromHistory: (videoId: string) => void;
-  clearHistory: () => void;
-  continueWatching: WatchHistoryItem[];
-  recentlyWatched: WatchHistoryItem[];
-  history: WatchHistoryItem[];
   filter: FeedFilter;
   setFilter: (filter: FeedFilter) => void;
   selectedChannel: string | null;
@@ -72,7 +64,6 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   } = useChannels();
   const { settings, updateSettings, resetSettings, isHydrated: settingsHydrated } =
     useSettings();
-  const history = useWatchHistory();
   const filters = useFilters(settings.defaultFilter);
   const channelsToFetch = useMemo(() => {
     if (filters.selectedTag) {
@@ -128,13 +119,6 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       updateSettings,
       resetSettings,
       settingsHydrated: settingsHydrated && settingsHydratedChannels,
-      watchedIds: history.watchedIds,
-      markAsWatched: history.markAsWatched,
-      removeFromHistory: history.removeFromHistory,
-      clearHistory: history.clearHistory,
-      continueWatching: history.continueWatching,
-      recentlyWatched: history.recentlyWatched,
-      history: history.history,
       filter: filters.filter,
       setFilter: filters.setFilter,
       selectedChannel: filters.selectedChannel,
@@ -170,13 +154,6 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       resetSettings,
       settingsHydrated,
       settingsHydratedChannels,
-      history.watchedIds,
-      history.markAsWatched,
-      history.removeFromHistory,
-      history.clearHistory,
-      history.continueWatching,
-      history.recentlyWatched,
-      history.history,
       filters.filter,
       filters.setFilter,
       filters.selectedChannel,

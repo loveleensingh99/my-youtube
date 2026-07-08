@@ -3,18 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
-import { MoreVertical } from "lucide-react";
 import type { Video } from "@/types";
 import { formatDuration, formatPublishedDate } from "@/utils/date";
 import { getChannelInitials } from "@/utils/video";
 
 interface VideoCardProps {
   video: Video;
-  isWatched?: boolean;
-  onMarkWatched?: (video: Video) => void;
 }
 
-function VideoCardComponent({ video, isWatched = false, onMarkWatched }: VideoCardProps) {
+function VideoCardComponent({ video }: VideoCardProps) {
   const duration = formatDuration(video.durationSeconds);
   const channelProfileHref = video.channelId ? `/channel/${video.channelId}` : null;
 
@@ -32,11 +29,6 @@ function VideoCardComponent({ video, isWatched = false, onMarkWatched }: VideoCa
           {duration ? (
             <span className="absolute bottom-2 right-2 rounded px-1.5 py-0.5 text-[11px] font-medium text-white bg-black/80">
               {duration}
-            </span>
-          ) : null}
-          {isWatched ? (
-            <span className="absolute left-2 top-2 rounded bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white">
-              Watched
             </span>
           ) : null}
         </div>
@@ -79,19 +71,6 @@ function VideoCardComponent({ video, isWatched = false, onMarkWatched }: VideoCa
             </p>
           )}
         </div>
-
-        {onMarkWatched && !isWatched ? (
-          <button
-            type="button"
-            onClick={() => onMarkWatched(video)}
-            className="mt-0.5 shrink-0 rounded-full p-1 text-muted-foreground hover:text-foreground"
-            aria-label="Mark as watched"
-          >
-            <MoreVertical className="h-4 w-4" />
-          </button>
-        ) : (
-          <div className="w-6 shrink-0" />
-        )}
       </div>
     </article>
   );

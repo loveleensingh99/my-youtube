@@ -1,30 +1,7 @@
-import type { FeedFilter, Settings, Video, WatchHistoryItem } from "@/types";
+import type { FeedFilter, Settings, Video } from "@/types";
 
 export function isValidVideoId(videoId: string): boolean {
   return /^[\w-]{11}$/.test(videoId);
-}
-
-export function resolveWatchVideo(
-  videoId: string,
-  videos: Video[],
-  history: WatchHistoryItem[],
-): Video | null {
-  const fromFeed = videos.find((video) => video.id === videoId);
-  if (fromFeed) return fromFeed;
-
-  const fromHistory = history.find((item) => item.videoId === videoId);
-  if (!fromHistory) return null;
-
-  return {
-    id: fromHistory.videoId,
-    title: fromHistory.title,
-    channelId: fromHistory.channelId,
-    channelName: fromHistory.channelName,
-    publishedAt: fromHistory.watchedAt,
-    thumbnailUrl: fromHistory.thumbnailUrl,
-    type: "video",
-    link: `https://www.youtube.com/watch?v=${fromHistory.videoId}`,
-  };
 }
 
 export function createFallbackWatchVideo(videoId: string): Video {
@@ -44,7 +21,6 @@ export function filterVideos(
   videos: Video[],
   filter: FeedFilter,
   settings: Settings,
-  watchedIds: Set<string>,
   channelId?: string | null,
 ): Video[] {
   return videos.filter((video) => {
@@ -53,7 +29,6 @@ export function filterVideos(
     if (filter === "shorts" && video.type !== "short") return false;
     if (!settings.showVideos && video.type === "video") return false;
     if (!settings.showShorts && video.type === "short") return false;
-    if (settings.hideWatchedVideos && watchedIds.has(video.id)) return false;
     return true;
   });
 }
@@ -64,14 +39,7 @@ export function filterWatchPlaylist(
   settings: Settings,
   channelId?: string | null,
 ): Video[] {
-  return videos.filter((video) => {
-    if (channelId && video.channelId !== channelId) return false;
-    if (filter === "videos" && video.type !== "video") return false;
-    if (filter === "shorts" && video.type !== "short") return false;
-    if (!settings.showVideos && video.type === "video") return false;
-    if (!settings.showShorts && video.type === "short") return false;
-    return true;
-  });
+  return filterVideos(videos, filter, settings, channelId);
 }
 
 export function getChannelInitials(name: string): string {

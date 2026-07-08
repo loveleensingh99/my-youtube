@@ -1,4 +1,4 @@
-import type { Channel, FeedFilter, Settings, ThumbnailSize, WatchHistoryItem } from "@/types";
+import type { Channel, FeedFilter, Settings, ThumbnailSize } from "@/types";
 import { defaultChannels } from "@/data/channels";
 import { defaultSettings } from "@/lib/defaults";
 
@@ -23,7 +23,6 @@ export function normalizeSettings(value: unknown): Settings {
     compactMode: Boolean(raw.compactMode),
     showShorts: raw.showShorts !== false,
     showVideos: raw.showVideos !== false,
-    hideWatchedVideos: Boolean(raw.hideWatchedVideos),
     thumbnailSize: VALID_THUMBNAIL_SIZES.includes(raw.thumbnailSize as ThumbnailSize)
       ? (raw.thumbnailSize as ThumbnailSize)
       : defaultSettings.thumbnailSize,
@@ -33,26 +32,6 @@ export function normalizeSettings(value: unknown): Settings {
     youtubeApiKey:
       typeof raw.youtubeApiKey === "string" ? raw.youtubeApiKey.trim() : defaultSettings.youtubeApiKey,
   };
-}
-
-export function normalizeWatchHistory(value: unknown): WatchHistoryItem[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value
-    .filter(
-      (item): item is WatchHistoryItem =>
-        Boolean(item) &&
-        typeof item === "object" &&
-        typeof (item as WatchHistoryItem).videoId === "string" &&
-        typeof (item as WatchHistoryItem).title === "string" &&
-        typeof (item as WatchHistoryItem).channelId === "string" &&
-        typeof (item as WatchHistoryItem).channelName === "string" &&
-        typeof (item as WatchHistoryItem).thumbnailUrl === "string" &&
-        typeof (item as WatchHistoryItem).watchedAt === "string",
-    )
-    .slice(0, 100);
 }
 
 export function normalizeFeedFilter(value: unknown, fallback: FeedFilter = "all"): FeedFilter {

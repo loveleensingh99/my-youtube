@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
@@ -16,7 +16,6 @@ interface MobileWatchFeedProps {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void | Promise<void>;
-  onMarkWatched?: (video: Video) => void;
 }
 
 export function MobileWatchFeed({
@@ -25,15 +24,12 @@ export function MobileWatchFeed({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
-  onMarkWatched,
 }: MobileWatchFeedProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeVideoId, setActiveVideoId] = useState(initialVideoId);
   const loadMoreLockRef = useRef(false);
-  const markedVideoIdsRef = useRef(new Set<string>());
   const activeVideoIdRef = useRef(activeVideoId);
-  const onMarkWatchedRef = useRef(onMarkWatched);
   const onLoadMoreRef = useRef(onLoadMore);
   const videosRef = useRef(videos);
   const hasMoreRef = useRef(hasMore);
@@ -41,7 +37,6 @@ export function MobileWatchFeed({
 
   useEffect(() => {
     activeVideoIdRef.current = activeVideoId;
-    onMarkWatchedRef.current = onMarkWatched;
     onLoadMoreRef.current = onLoadMore;
     videosRef.current = videos;
     hasMoreRef.current = hasMore;
@@ -49,19 +44,6 @@ export function MobileWatchFeed({
 
   const activeIndex = videos.findIndex((video) => video.id === activeVideoId);
   const activeVideo = videos[activeIndex] ?? videos[0];
-
-  const markVideoOnce = useCallback((video: Video) => {
-    if (markedVideoIdsRef.current.has(video.id)) return;
-    markedVideoIdsRef.current.add(video.id);
-    onMarkWatchedRef.current?.(video);
-  }, []);
-
-  useEffect(() => {
-    const initialVideo = videosRef.current.find((entry) => entry.id === initialVideoId);
-    if (initialVideo) {
-      markVideoOnce(initialVideo);
-    }
-  }, [initialVideoId, markVideoOnce]);
 
   useEffect(() => {
     if (hasScrolledToInitialRef.current) return;
@@ -98,10 +80,6 @@ export function MobileWatchFeed({
 
         const currentVideos = videosRef.current;
         const index = currentVideos.findIndex((video) => video.id === videoId);
-        const video = currentVideos[index];
-        if (video) {
-          markVideoOnce(video);
-        }
 
         if (
           hasMoreRef.current &&
@@ -123,7 +101,7 @@ export function MobileWatchFeed({
     const slides = Array.from(container.querySelectorAll<HTMLElement>("[data-video-id]"));
     slides.forEach((slide) => observer.observe(slide));
     return () => observer.disconnect();
-  }, [markVideoOnce, videos.length]);
+  }, [videos.length]);
 
   if (!activeVideo) {
     return null;

@@ -28,8 +28,6 @@ export function HomePageClient() {
     refresh,
     settings,
     settingsHydrated,
-    watchedIds,
-    markAsWatched,
     filter,
     setFilter,
     selectedTag,
@@ -57,8 +55,8 @@ export function HomePageClient() {
 
   const filteredVideos = useMemo(() => {
     if (!settingsHydrated) return [];
-    return filterVideos(videos, filter, settings, watchedIds);
-  }, [videos, filter, settings, watchedIds, settingsHydrated]);
+    return filterVideos(videos, filter, settings);
+  }, [videos, filter, settings, settingsHydrated]);
 
   const handleSelectTag = useCallback(
     (tag: string | null) => {
@@ -104,16 +102,7 @@ export function HomePageClient() {
             isLoadingMore={isLoadingMore}
             hasMore={hasMore}
             onLoadMore={() => void loadMore()}
-            watchedIds={watchedIds}
-            onMarkWatched={(video) =>
-              markAsWatched({
-                videoId: video.id,
-                title: video.title,
-                channelId: video.channelId,
-                channelName: video.channelName,
-                thumbnailUrl: video.thumbnailUrl,
-              })
-            }
+            feedFilter={filter}
           />
         )}
       </main>

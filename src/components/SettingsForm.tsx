@@ -21,15 +21,9 @@ interface SettingsFormProps {
   settings: Settings;
   onUpdate: (settings: Partial<Settings>) => void;
   onReset: () => void;
-  onClearHistory: () => void;
 }
 
-export function SettingsForm({
-  settings,
-  onUpdate,
-  onReset,
-  onClearHistory,
-}: SettingsFormProps) {
+export function SettingsForm({ settings, onUpdate, onReset }: SettingsFormProps) {
   return (
     <div className="space-y-6">
       <Card>
@@ -54,15 +48,6 @@ export function SettingsForm({
             <Switch
               checked={settings.showShorts}
               onCheckedChange={(checked) => onUpdate({ showShorts: checked })}
-            />
-          </SettingRow>
-          <SettingRow
-            label="Hide watched videos"
-            description="Remove videos you've already watched from the feed."
-          >
-            <Switch
-              checked={settings.hideWatchedVideos}
-              onCheckedChange={(checked) => onUpdate({ hideWatchedVideos: checked })}
             />
           </SettingRow>
           <SettingRow label="Compact mode" description="Use a denser card layout.">
@@ -146,20 +131,10 @@ export function SettingsForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>History</CardTitle>
-          <CardDescription>Manage your local watch history.</CardDescription>
+          <CardTitle>Reset</CardTitle>
+          <CardDescription>Restore default app settings.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              onClearHistory();
-              toast.success("Watch history cleared");
-            }}
-          >
-            Clear watch history
-          </Button>
+        <CardContent>
           <Button
             type="button"
             variant="outline"

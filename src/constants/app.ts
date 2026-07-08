@@ -4,7 +4,6 @@ export const APP_DESCRIPTION =
 
 export const STORAGE_KEYS = {
   settings: "focustube:settings",
-  watchHistory: "focustube:watch-history",
   channels: "focustube:channels",
   lastRefresh: "focustube:last-refresh",
   selectedFilter: "focustube:selected-filter",

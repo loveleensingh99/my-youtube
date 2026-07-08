@@ -1,3 +1,16 @@
+export function ShortCardSkeleton() {
+  return (
+    <div className="animate-pulse min-w-0">
+      <div className="aspect-[9/16] rounded-xl bg-secondary" />
+      <div className="mt-2 space-y-1.5 px-0.5">
+        <div className="h-3 w-full rounded bg-secondary" />
+        <div className="h-3 w-2/3 rounded bg-secondary" />
+        <div className="h-2.5 w-1/2 rounded bg-secondary" />
+      </div>
+    </div>
+  );
+}
+
 export function VideoCardSkeleton() {
   return (
     <div className="animate-pulse">
@@ -13,7 +26,23 @@ export function VideoCardSkeleton() {
   );
 }
 
-export function VideoGridSkeleton({ count = 4 }: { count?: number }) {
+export function VideoGridSkeleton({
+  count = 4,
+  shortsOnly = false,
+}: {
+  count?: number;
+  shortsOnly?: boolean;
+}) {
+  if (shortsOnly) {
+    return (
+      <div className="grid grid-cols-2 gap-x-2 gap-y-4 px-2 py-2">
+        {Array.from({ length: count }).map((_, index) => (
+          <ShortCardSkeleton key={index} />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="divide-y divide-border">
       {Array.from({ length: count }).map((_, index) => (

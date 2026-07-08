@@ -8,7 +8,6 @@ export interface Settings {
   compactMode: boolean;
   showShorts: boolean;
   showVideos: boolean;
-  hideWatchedVideos: boolean;
   thumbnailSize: ThumbnailSize;
   defaultFilter: FeedFilter;
   youtubeApiKey: string;

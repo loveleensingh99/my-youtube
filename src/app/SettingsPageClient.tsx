@@ -5,8 +5,7 @@ import { SettingsForm } from "@/components/SettingsForm";
 import { useFeedContext } from "@/components/FeedProvider";
 
 export function SettingsPageClient() {
-  const { settings, updateSettings, resetSettings, clearHistory, refresh, isLoading } =
-    useFeedContext();
+  const { settings, updateSettings, resetSettings, refresh, isLoading } = useFeedContext();
 
   return (
     <>
@@ -17,7 +16,6 @@ export function SettingsPageClient() {
           settings={settings}
           onUpdate={updateSettings}
           onReset={resetSettings}
-          onClearHistory={clearHistory}
         />
       </main>
     </>

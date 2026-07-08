@@ -33,12 +33,10 @@ export function ChannelsPageClient() {
       <Header title="Subscriptions" onRefresh={() => void refresh()} isRefreshing={isLoading} />
 
       <main className="space-y-6 px-4 py-4">
-        <ChannelManager />
-
         {channels.length === 0 ? (
           <EmptyState
             title="No channels yet"
-            description="Add a YouTube channel above to start building your feed."
+            description="Add a YouTube channel below to start building your feed."
           />
         ) : isLoading ? (
           <div className="space-y-3">
@@ -59,6 +57,8 @@ export function ChannelsPageClient() {
             ))}
           </div>
         )}
+
+        <ChannelManager />
       </main>
     </>
   );

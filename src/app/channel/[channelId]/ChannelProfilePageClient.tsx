@@ -24,7 +24,7 @@ interface ChannelProfilePageClientProps {
 
 export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClientProps) {
   const router = useRouter();
-  const { channels, settings, settingsHydrated, watchedIds, markAsWatched } = useFeedContext();
+  const { channels, settings, settingsHydrated } = useFeedContext();
   const [filter, setFilter] = useState<FeedFilter>("all");
 
   const channel = useMemo(
@@ -37,8 +37,8 @@ export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClient
 
   const filteredVideos = useMemo(() => {
     if (!settingsHydrated) return [];
-    return filterVideos(feed.videos, filter, settings, watchedIds, channelId);
-  }, [feed.videos, filter, settings, watchedIds, channelId, settingsHydrated]);
+    return filterVideos(feed.videos, filter, settings, channelId);
+  }, [feed.videos, filter, settings, channelId, settingsHydrated]);
 
   const stats = useMemo(() => {
     const videoCount = feed.videos.filter((video) => video.type === "video").length;
@@ -101,16 +101,7 @@ export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClient
             isLoadingMore={feed.isLoadingMore}
             hasMore={feed.hasMore}
             onLoadMore={() => void feed.loadMore()}
-            watchedIds={watchedIds}
-            onMarkWatched={(video) =>
-              markAsWatched({
-                videoId: video.id,
-                title: video.title,
-                channelId: video.channelId,
-                channelName: video.channelName,
-                thumbnailUrl: video.thumbnailUrl,
-              })
-            }
+            feedFilter={filter}
           />
         )}
       </main>

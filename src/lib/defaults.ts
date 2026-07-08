@@ -7,7 +7,6 @@ export const defaultSettings: Settings = {
   compactMode: false,
   showShorts: true,
   showVideos: true,
-  hideWatchedVideos: false,
   thumbnailSize: "medium",
   defaultFilter: "all",
   youtubeApiKey: "",

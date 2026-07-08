@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { MobileWatchFeed } from "@/components/MobileWatchFeed";
 import { ErrorState } from "@/components/ErrorState";
@@ -15,12 +15,10 @@ export function WatchPageClient({ videoId }: WatchPageClientProps) {
   const router = useRouter();
   const {
     videos,
-    history,
     isLoading,
     hasMore,
     isLoadingMore,
     loadMore,
-    markAsWatched,
     settings,
     settingsHydrated,
     filter,
@@ -40,38 +38,8 @@ export function WatchPageClient({ videoId }: WatchPageClientProps) {
       return allChannels;
     }
 
-    const fromHistory = history.find((item) => item.videoId === videoId);
-    if (fromHistory) {
-      return [
-        {
-          id: fromHistory.videoId,
-          title: fromHistory.title,
-          channelId: fromHistory.channelId,
-          channelName: fromHistory.channelName,
-          publishedAt: fromHistory.watchedAt,
-          thumbnailUrl: fromHistory.thumbnailUrl,
-          type: "video" as const,
-          link: `https://www.youtube.com/watch?v=${fromHistory.videoId}`,
-        },
-        ...scoped,
-      ];
-    }
-
     return scoped.length > 0 ? scoped : videos;
-  }, [videos, filter, settings, selectedChannel, settingsHydrated, videoId, history]);
-
-  const handleMarkWatched = useCallback(
-    (video: (typeof playlist)[number]) => {
-      markAsWatched({
-        videoId: video.id,
-        title: video.title,
-        channelId: video.channelId,
-        channelName: video.channelName,
-        thumbnailUrl: video.thumbnailUrl,
-      });
-    },
-    [markAsWatched],
-  );
+  }, [videos, filter, settings, selectedChannel, settingsHydrated, videoId]);
 
   if (!isValidVideoId(videoId)) {
     return (
@@ -109,7 +77,6 @@ export function WatchPageClient({ videoId }: WatchPageClientProps) {
       hasMore={hasMore}
       isLoadingMore={isLoadingMore}
       onLoadMore={loadMore}
-      onMarkWatched={handleMarkWatched}
     />
   );
 }
