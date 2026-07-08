@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, type RefObject } from "react";
-import { Loader2 } from "lucide-react";
 import type { FeedFilter } from "@/types";
 import type { Video } from "@/types";
 import { segmentFeedVideos, isShortsOnlyFeed } from "@/utils/feed-layout";
 import { VideoCard } from "./VideoCard";
 import { ShortCard } from "./ShortCard";
-import { VideoGridSkeleton } from "./Skeleton";
+import { VideoGridSkeleton, LoadMoreVideoSkeleton } from "./Skeleton";
 import { EmptyState } from "./ErrorState";
 
 interface VideoGridProps {
@@ -70,12 +69,10 @@ export function VideoGrid({
           ))}
         </div>
 
-        {hasMore || isLoadingMore ? (
-          <LoadMoreSentinel
-            sentinelRef={sentinelRef}
-            isLoadingMore={isLoadingMore}
-            hasMore={hasMore}
-          />
+        {isLoadingMore ? <LoadMoreVideoSkeleton shortsOnly /> : null}
+
+        {hasMore ? (
+          <LoadMoreSentinel sentinelRef={sentinelRef} />
         ) : null}
       </>
     );
@@ -106,40 +103,17 @@ export function VideoGrid({
         })}
       </div>
 
-      {hasMore || isLoadingMore ? (
-        <LoadMoreSentinel
-          sentinelRef={sentinelRef}
-          isLoadingMore={isLoadingMore}
-          hasMore={hasMore}
-        />
-      ) : null}
+      {isLoadingMore ? <LoadMoreVideoSkeleton /> : null}
+
+      {hasMore ? <LoadMoreSentinel sentinelRef={sentinelRef} /> : null}
     </>
   );
 }
 
 function LoadMoreSentinel({
   sentinelRef,
-  isLoadingMore,
-  hasMore,
 }: {
   sentinelRef: RefObject<HTMLDivElement | null>;
-  isLoadingMore: boolean;
-  hasMore: boolean;
 }) {
-  return (
-    <div
-      ref={sentinelRef}
-      className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground"
-      aria-live="polite"
-    >
-      {isLoadingMore ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Loading more...
-        </>
-      ) : hasMore ? (
-        "Scroll for more"
-      ) : null}
-    </div>
-  );
+  return <div ref={sentinelRef} className="h-4" aria-hidden />;
 }

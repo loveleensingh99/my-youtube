@@ -25,7 +25,7 @@ export const YOUTUBE_EMBED_PARAMS = {
 } as const;
 
 export const NEW_VIDEO_THRESHOLD_HOURS = 24;
-export const SHORT_MAX_DURATION_SECONDS = 60;
+export const SHORT_MAX_DURATION_SECONDS = 120;
 export const FEED_PAGE_SIZE = 12;
 export const API_VIDEOS_PER_PAGE = 15;
 export const RSS_MAX_VIDEOS_PER_CHANNEL = 15;

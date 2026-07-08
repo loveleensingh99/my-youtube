@@ -2,10 +2,16 @@
 
 import { Header } from "@/components/Header";
 import { SettingsForm } from "@/components/SettingsForm";
+import { SettingsPageSkeleton } from "@/components/Skeleton";
 import { useFeedContext } from "@/components/FeedProvider";
 
 export function SettingsPageClient() {
-  const { settings, updateSettings, resetSettings, refresh, isLoading } = useFeedContext();
+  const { settings, updateSettings, resetSettings, refresh, isLoading, settingsHydrated } =
+    useFeedContext();
+
+  if (!settingsHydrated) {
+    return <SettingsPageSkeleton />;
+  }
 
   return (
     <>

@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import type { FeedFilter } from "@/types";
-import { Button } from "@/components/ui/button";
 
 const filters: { value: FeedFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -24,27 +23,26 @@ export function FilterBar({
   items = filters,
 }: FilterBarProps) {
   return (
-    <div
-      className={cn(
-        "flex gap-2 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-        className,
-      )}
-      role="tablist"
-      aria-label="Feed filters"
-    >
-      {items.map((item) => (
-        <Button
-          key={item.value}
-          variant={filter === item.value ? "default" : "secondary"}
-          size="sm"
-          role="tab"
-          aria-selected={filter === item.value}
-          onClick={() => onFilterChange(item.value)}
-          className="h-8 shrink-0 rounded-lg px-3 text-xs"
-        >
-          {item.label}
-        </Button>
-      ))}
+    <div className={cn("px-4 pb-3", className)} role="tablist" aria-label="Feed filters">
+      <div className="flex rounded-full bg-white/[0.06] p-1 ring-1 ring-white/10">
+        {items.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            role="tab"
+            aria-selected={filter === item.value}
+            onClick={() => onFilterChange(item.value)}
+            className={cn(
+              "flex-1 rounded-full px-3 py-2 text-xs font-medium transition-all duration-200 sm:text-sm",
+              filter === item.value
+                ? "bg-white text-[#0f0f0f] shadow-sm"
+                : "text-white/60 hover:text-white/90",
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

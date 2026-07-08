@@ -7,8 +7,10 @@ import {
   useId,
   useImperativeHandle,
   useRef,
+  useState,
 } from "react";
 import { cn } from "@/lib/utils";
+import { WatchPlayerSkeleton } from "@/components/Skeleton";
 import { loadYouTubeIframeApi, YOUTUBE_PLAYER_STATE, type YouTubePlayer } from "@/lib/youtube-player-api";
 
 export interface WatchPlayerHandle {
@@ -32,6 +34,11 @@ export const WatchPlayer = forwardRef<WatchPlayerHandle, WatchPlayerProps>(funct
   const playerRef = useRef<YouTubePlayer | null>(null);
   const onProgressRef = useRef(onProgress);
   const fallbackDurationRef = useRef(fallbackDuration);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
+
+  useEffect(() => {
+    setIsPlayerReady(false);
+  }, [videoId]);
 
   useEffect(() => {
     onProgressRef.current = onProgress;
@@ -79,6 +86,7 @@ export const WatchPlayer = forwardRef<WatchPlayerHandle, WatchPlayerProps>(funct
         events: {
           onReady: (event) => {
             if (cancelled) return;
+            setIsPlayerReady(true);
             if (autoplay) {
               event.target.playVideo();
             }
@@ -108,6 +116,7 @@ export const WatchPlayer = forwardRef<WatchPlayerHandle, WatchPlayerProps>(funct
 
   return (
     <div className={cn("relative h-full w-full bg-black", className)}>
+      {!isPlayerReady ? <WatchPlayerSkeleton /> : null}
       <div id={containerId} title={title} className="absolute inset-0 h-full w-full" />
     </div>
   );

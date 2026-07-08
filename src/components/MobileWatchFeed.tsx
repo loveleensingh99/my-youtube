@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
+import { WatchLoadMoreSkeleton } from "@/components/Skeleton";
 import { WatchPlayer } from "@/components/WatchPlayer";
 import { Button } from "@/components/ui/button";
 import type { Video } from "@/types";
@@ -179,11 +180,7 @@ export function MobileWatchFeed({
           );
         })}
 
-        {isLoadingMore ? (
-          <div className="flex h-24 snap-start items-center justify-center text-sm text-white/60">
-            Loading more videos...
-          </div>
-        ) : null}
+        {isLoadingMore ? <WatchLoadMoreSkeleton /> : null}
       </div>
     </div>
   );

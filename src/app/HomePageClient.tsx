@@ -3,9 +3,9 @@
 import { useMemo, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/Header";
-import { FilterBar } from "@/components/FilterBar";
-import { TagChips } from "@/components/TagChips";
+import { FeedToolbar } from "@/components/FeedToolbar";
 import { VideoGrid } from "@/components/VideoGrid";
+import { HomePageSkeleton } from "@/components/Skeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
 import { filterVideos } from "@/utils/video";
@@ -72,18 +72,22 @@ export function HomePageClient() {
     [router, selectTag, clearFeedFilters],
   );
 
+  if (!settingsHydrated) {
+    return <HomePageSkeleton shortsOnly={filter === "shorts"} />;
+  }
+
   return (
     <>
       <Header title="Home" onRefresh={() => void refresh()} isRefreshing={isLoading} />
 
-      <TagChips
+      <FeedToolbar
         tags={tags}
         selectedTag={selectedTag}
         onSelectTag={handleSelectTag}
         allActive={!selectedTag}
+        filter={filter}
+        onFilterChange={setFilter}
       />
-
-      <FilterBar filter={filter} onFilterChange={setFilter} />
 
       <main className="flex-1">
         {error ? (
@@ -98,7 +102,7 @@ export function HomePageClient() {
         ) : (
           <VideoGrid
             videos={filteredVideos}
-            isLoading={isLoading || !settingsHydrated}
+            isLoading={isLoading}
             isLoadingMore={isLoadingMore}
             hasMore={hasMore}
             onLoadMore={() => void loadMore()}

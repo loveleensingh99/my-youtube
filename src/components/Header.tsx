@@ -17,7 +17,7 @@ export function Header({ title, onBack, onRefresh, isRefreshing = false, classNa
   return (
     <header
       className={cn(
-        "sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]",
+        "sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-background/95 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md",
         className,
       )}
     >

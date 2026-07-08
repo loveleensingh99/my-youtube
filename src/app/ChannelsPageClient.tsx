@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { ChannelCard } from "@/components/ChannelCard";
 import { ChannelManager } from "@/components/ChannelManager";
-import { ChannelCardSkeleton } from "@/components/Skeleton";
+import { ChannelCardSkeleton, ChannelsPageSkeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
 import type { ChannelWithStats } from "@/types";
 
 export function ChannelsPageClient() {
   const router = useRouter();
-  const { channels, videosByChannel, isLoading, refresh } = useFeedContext();
+  const { channels, videosByChannel, isLoading, refresh, settingsHydrated } = useFeedContext();
 
   const channelsWithStats = useMemo<ChannelWithStats[]>(() => {
     return channels.map((channel) => {
@@ -27,6 +27,10 @@ export function ChannelsPageClient() {
       };
     });
   }, [channels, videosByChannel]);
+
+  if (!settingsHydrated) {
+    return <ChannelsPageSkeleton />;
+  }
 
   return (
     <>

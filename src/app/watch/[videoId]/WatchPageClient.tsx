@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MobileWatchFeed } from "@/components/MobileWatchFeed";
 import { ErrorState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
+import { WatchPageSkeleton } from "@/components/Skeleton";
 import { filterWatchPlaylist, isValidVideoId } from "@/utils/video";
 
 interface WatchPageClientProps {
@@ -53,8 +54,8 @@ export function WatchPageClient({ videoId }: WatchPageClientProps) {
     );
   }
 
-  if (isLoading && playlist.length === 0) {
-    return <main className="min-h-[100dvh] bg-black" />;
+  if ((isLoading || !settingsHydrated) && playlist.length === 0) {
+    return <WatchPageSkeleton />;
   }
 
   if (playlist.length === 0) {

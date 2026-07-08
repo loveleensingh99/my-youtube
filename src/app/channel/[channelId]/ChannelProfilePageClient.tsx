@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { FilterBar } from "@/components/FilterBar";
 import { ChannelProfileHeader } from "@/components/ChannelProfileHeader";
 import { VideoGrid } from "@/components/VideoGrid";
+import { ChannelProfileHeaderSkeleton } from "@/components/Skeleton";
 import { EmptyState, ErrorState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
 import { useRSSFeed } from "@/hooks/useRSSFeed";
@@ -48,6 +49,8 @@ export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClient
     return { videoCount, shortCount, latestUpload };
   }, [feed.videos]);
 
+  const isInitialLoading = feed.isLoading && feed.videos.length === 0;
+
   if (!channel) {
     return (
       <>
@@ -71,12 +74,16 @@ export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClient
         isRefreshing={feed.isLoading}
       />
 
-      <ChannelProfileHeader
-        channel={channel}
-        videoCount={stats.videoCount}
-        shortCount={stats.shortCount}
-        latestUpload={stats.latestUpload}
-      />
+      {isInitialLoading ? (
+        <ChannelProfileHeaderSkeleton />
+      ) : (
+        <ChannelProfileHeader
+          channel={channel}
+          videoCount={stats.videoCount}
+          shortCount={stats.shortCount}
+          latestUpload={stats.latestUpload}
+        />
+      )}
 
       <FilterBar
         filter={filter}
