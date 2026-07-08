@@ -1,5 +1,6 @@
 "use client";
 
+import { FirebaseChannelSync } from "@/components/FirebaseChannelSync";
 import { Header } from "@/components/Header";
 import { SettingsForm } from "@/components/SettingsForm";
 import { SettingsPageSkeleton } from "@/components/Skeleton";
@@ -17,7 +18,8 @@ export function SettingsPageClient() {
     <>
       <Header title="You" onRefresh={() => void refresh()} isRefreshing={isLoading} />
 
-      <main className="px-4 py-4">
+      <main className="space-y-6 px-4 py-4">
+        <FirebaseChannelSync />
         <SettingsForm
           settings={settings}
           onUpdate={updateSettings}

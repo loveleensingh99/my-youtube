@@ -1,0 +1,10 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Personal use only — replace the key below with your NEXT_PUBLIC_FIREBASE_SYNC_KEY
+    match /personal/{syncKey} {
+      allow read, write: if syncKey == "focustube-my-7ef9a-personal";
+    }
+  }
+}

@@ -1,15 +1,6 @@
 "use server";
 
-import {
-  getChannelsStorageDescription,
-  getChannelsStorageMode,
-  readStoredChannels,
-  writeStoredChannels,
-  type ChannelsStorageMode,
-} from "@/lib/channels-store";
-import { defaultChannels } from "@/data/channels";
 import { fetchChannelFeed } from "@/lib/rss";
-import { normalizeChannels } from "@/lib/storage";
 import {
   extractChannelIdFromUrl,
   extractHandleFromUrl,
@@ -17,83 +8,6 @@ import {
   sanitizeChannelName,
 } from "@/lib/youtube-url";
 import type { Channel } from "@/types";
-
-function channelIds(channels: Channel[]): string[] {
-  return channels.map((channel) => channel.id).sort();
-}
-
-function sameChannelIds(a: Channel[], b: Channel[]): boolean {
-  const aIds = channelIds(a);
-  const bIds = channelIds(b);
-  return aIds.length === bIds.length && aIds.every((id, index) => id === bIds[index]);
-}
-
-function isDefaultChannelList(channels: Channel[]): boolean {
-  return sameChannelIds(channels, defaultChannels);
-}
-
-export async function getChannelsStorageInfo(): Promise<{
-  mode: ChannelsStorageMode;
-  description: string;
-}> {
-  const mode = getChannelsStorageMode();
-  return {
-    mode,
-    description: getChannelsStorageDescription(mode),
-  };
-}
-
-/** @deprecated Use readStoredChannels via syncChannelsWithFile */
-export async function getStoredChannels(): Promise<Channel[]> {
-  return readStoredChannels();
-}
-
-export async function persistChannels(
-  channels: Channel[],
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  return writeStoredChannels(channels);
-}
-
-export async function syncChannelsWithFile(
-  localChannels: Channel[],
-): Promise<{
-  channels: Channel[];
-  persisted: boolean;
-  storageMode: ChannelsStorageMode;
-  error?: string;
-}> {
-  const storageMode = getChannelsStorageMode();
-
-  if (storageMode === "browser") {
-    return {
-      channels: localChannels,
-      persisted: false,
-      storageMode,
-    };
-  }
-
-  const storedChannels = await readStoredChannels();
-
-  if (isDefaultChannelList(storedChannels) && !isDefaultChannelList(localChannels)) {
-    const result = await writeStoredChannels(localChannels);
-    if (!result.ok) {
-      return {
-        channels: localChannels,
-        persisted: false,
-        storageMode,
-        error: result.error,
-      };
-    }
-
-    return { channels: localChannels, persisted: true, storageMode };
-  }
-
-  if (!sameChannelIds(storedChannels, localChannels)) {
-    return { channels: storedChannels, persisted: false, storageMode };
-  }
-
-  return { channels: storedChannels, persisted: false, storageMode };
-}
 
 async function fetchChannelIdFromHandle(handle: string): Promise<string | null> {
   const response = await fetch(`https://www.youtube.com/@${handle}`, {

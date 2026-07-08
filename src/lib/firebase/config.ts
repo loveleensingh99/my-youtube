@@ -1,0 +1,39 @@
+export interface FirebasePublicConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+}
+
+export function getFirebaseConfig(): FirebasePublicConfig | null {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim();
+  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim();
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim();
+  const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim();
+  const messagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?.trim();
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID?.trim();
+
+  if (!apiKey || !authDomain || !projectId || !appId) {
+    return null;
+  }
+
+  return {
+    apiKey,
+    authDomain,
+    projectId,
+    storageBucket: storageBucket ?? `${projectId}.appspot.com`,
+    messagingSenderId: messagingSenderId ?? "",
+    appId,
+  };
+}
+
+export function isFirebaseConfigured(): boolean {
+  return getFirebaseConfig() !== null && Boolean(getFirebaseSyncKey());
+}
+
+export function getFirebaseSyncKey(): string | null {
+  const syncKey = process.env.NEXT_PUBLIC_FIREBASE_SYNC_KEY?.trim();
+  return syncKey || null;
+}

@@ -7,7 +7,6 @@ import { useSettings } from "@/hooks/useSettings";
 import { useFilters } from "@/hooks/useFilters";
 import { useRefresh } from "@/hooks/useRefresh";
 import { useChannels } from "@/hooks/useChannels";
-import type { ChannelsStorageMode } from "@/lib/channels-store";
 import type { Channel, FeedFilter, Settings, Video } from "@/types";
 
 interface FeedContextValue {
@@ -46,8 +45,9 @@ interface FeedContextValue {
   clearTagFilter: () => void;
   clearFeedFilters: () => void;
   channelsSyncError: string | null;
-  channelsStorageMode: ChannelsStorageMode;
   channelsStorageDescription: string;
+  firebaseConfigured: boolean;
+  firebaseSyncActive: boolean;
 }
 
 const FeedContext = createContext<FeedContextValue | null>(null);
@@ -61,8 +61,9 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     hasChannel,
     isHydrated: settingsHydratedChannels,
     syncError: channelsSyncError,
-    storageMode: channelsStorageMode,
     storageDescription: channelsStorageDescription,
+    firebaseConfigured,
+    firebaseSyncActive,
   } = useChannels();
   const { settings, updateSettings, resetSettings, isHydrated: settingsHydrated } =
     useSettings();
@@ -132,8 +133,9 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       clearTagFilter: filters.clearTagFilter,
       clearFeedFilters: filters.clearFeedFilters,
       channelsSyncError,
-      channelsStorageMode,
       channelsStorageDescription,
+      firebaseConfigured,
+      firebaseSyncActive,
     }),
     [
       channels,
@@ -168,8 +170,9 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       filters.clearTagFilter,
       filters.clearFeedFilters,
       channelsSyncError,
-      channelsStorageMode,
       channelsStorageDescription,
+      firebaseConfigured,
+      firebaseSyncActive,
     ],
   );
 

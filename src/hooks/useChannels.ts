@@ -1,84 +1,158 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  getChannelsStorageInfo,
-  persistChannels,
-  syncChannelsWithFile,
-} from "@/app/actions/channels";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { defaultChannels } from "@/data/channels";
+import {
+  mergeChannels,
+  saveRemoteChannels,
+  subscribeRemoteChannels,
+} from "@/lib/firebase/channels";
+import { isFirebaseConfigured } from "@/lib/firebase/config";
 import { normalizeChannels } from "@/lib/storage";
-import type { ChannelsStorageMode } from "@/lib/channels-store";
 import { STORAGE_KEYS } from "@/constants/app";
 import type { Channel } from "@/types";
 import { useLocalStorage } from "./useLocalStorage";
 
+function channelIdsKey(channels: Channel[]): string {
+  return channels
+    .map((channel) => channel.id)
+    .sort()
+    .join("|");
+}
+
 export function useChannels() {
-  const { value: channels, setValue, isHydrated } = useLocalStorage<Channel[]>(
+  const { value: channels, setValue } = useLocalStorage<Channel[]>(
     STORAGE_KEYS.channels,
     defaultChannels,
     normalizeChannels,
   );
-  const [isSyncing, setIsSyncing] = useState(true);
+  const firebaseEnabled = isFirebaseConfigured();
   const [syncError, setSyncError] = useState<string | null>(null);
-  const [storageMode, setStorageMode] = useState<ChannelsStorageMode>("browser");
-  const [storageDescription, setStorageDescription] = useState("");
-  const hasSyncedRef = useRef(false);
+  const [firebaseSyncActive, setFirebaseSyncActive] = useState(firebaseEnabled);
   const channelsRef = useRef(channels);
+  const applyingRemoteRef = useRef(false);
+  const hasSeededRemoteRef = useRef(false);
 
   useEffect(() => {
     channelsRef.current = channels;
   }, [channels]);
 
   useEffect(() => {
-    if (!isHydrated || hasSyncedRef.current) return;
+    if (!firebaseEnabled || !firebaseSyncActive) {
+      return;
+    }
 
-    hasSyncedRef.current = true;
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (!cancelled && !hasSeededRemoteRef.current) {
+        setSyncError(
+          "Could not connect to Firebase. Create a Firestore database in the Firebase console, or the app will use local storage only.",
+        );
+        setFirebaseSyncActive(false);
+      }
+    }, 5000);
 
-    void (async () => {
-      setIsSyncing(true);
-      setSyncError(null);
-
-      try {
-        const [result, storageInfo] = await Promise.all([
-          syncChannelsWithFile(channelsRef.current),
-          getChannelsStorageInfo(),
-        ]);
-
-        setStorageMode(storageInfo.mode);
-        setStorageDescription(storageInfo.description);
-
-        const currentIds = channelsRef.current.map((channel) => channel.id).sort().join("|");
-        const nextIds = result.channels.map((channel) => channel.id).sort().join("|");
-
-        if (currentIds !== nextIds) {
-          setValue(result.channels);
+    const unsubscribe = subscribeRemoteChannels(
+      (remoteChannels) => {
+        if (cancelled) {
+          return;
         }
 
-        if (result.error) {
+        window.clearTimeout(timeoutId);
+        const localChannels = channelsRef.current;
+
+        if (!hasSeededRemoteRef.current) {
+          hasSeededRemoteRef.current = true;
+
+          if (remoteChannels.length === 0 && localChannels.length > 0) {
+            void saveRemoteChannels(localChannels).then((result) => {
+              if (!result.ok) {
+                setSyncError(result.error);
+                setFirebaseSyncActive(false);
+              } else {
+                setSyncError(null);
+              }
+            });
+            return;
+          }
+
+          const merged = mergeChannels(localChannels, remoteChannels);
+          if (channelIdsKey(merged) !== channelIdsKey(remoteChannels)) {
+            void saveRemoteChannels(merged);
+          }
+
+          applyingRemoteRef.current = true;
+          setValue(merged);
+          setSyncError(null);
+          return;
+        }
+
+        applyingRemoteRef.current = true;
+        setValue(remoteChannels);
+        setSyncError(null);
+      },
+      () => {
+        if (cancelled) {
+          return;
+        }
+
+        window.clearTimeout(timeoutId);
+        setSyncError(
+          "Firebase sync is unavailable. Create a Firestore database in the Firebase console.",
+        );
+        setFirebaseSyncActive(false);
+      },
+    );
+
+    if (!unsubscribe) {
+      window.clearTimeout(timeoutId);
+      setFirebaseSyncActive(false);
+      return;
+    }
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+      unsubscribe();
+      hasSeededRemoteRef.current = false;
+    };
+  }, [firebaseEnabled, firebaseSyncActive, setValue]);
+
+  useEffect(() => {
+    if (!firebaseEnabled || !firebaseSyncActive || !hasSeededRemoteRef.current) {
+      return;
+    }
+
+    if (applyingRemoteRef.current) {
+      applyingRemoteRef.current = false;
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void saveRemoteChannels(channelsRef.current).then((result) => {
+        if (!result.ok) {
           setSyncError(result.error);
+          setFirebaseSyncActive(false);
+        } else {
+          setSyncError(null);
         }
-      } catch {
-        setSyncError("Could not sync channels from the server.");
-      } finally {
-        setIsSyncing(false);
-      }
-    })();
-  }, [isHydrated, setValue]);
+      });
+    }, 400);
 
-  const saveChannels = useCallback(
-    async (next: Channel[]) => {
-      const result = await persistChannels(next);
-      if (!result.ok) {
-        setSyncError(result.error);
-        return false;
-      }
+    return () => window.clearTimeout(timer);
+  }, [channels, firebaseEnabled, firebaseSyncActive]);
 
-      setSyncError(null);
-      return true;
-    },
-    [],
-  );
+  const storageDescription = useMemo(() => {
+    if (!firebaseEnabled) {
+      return "Channels are saved in this browser. Add Firebase settings to sync across your devices.";
+    }
+
+    if (!firebaseSyncActive) {
+      return "Using local storage. Fix Firebase setup in Settings to sync across devices.";
+    }
+
+    return "Your personal channel list syncs automatically with Firebase on all your devices.";
+  }, [firebaseEnabled, firebaseSyncActive]);
 
   const addChannel = useCallback(
     (channel: Channel) => {
@@ -87,29 +161,22 @@ export function useChannels() {
           return prev;
         }
 
-        const next = [...prev, channel];
-        void saveChannels(next);
-        return next;
+        return [...prev, channel];
       });
     },
-    [saveChannels, setValue],
+    [setValue],
   );
 
   const removeChannel = useCallback(
     (channelId: string) => {
-      setValue((prev) => {
-        const next = prev.filter((channel) => channel.id !== channelId);
-        void saveChannels(next);
-        return next;
-      });
+      setValue((prev) => prev.filter((channel) => channel.id !== channelId));
     },
-    [saveChannels, setValue],
+    [setValue],
   );
 
   const resetChannels = useCallback(() => {
     setValue(defaultChannels);
-    void saveChannels(defaultChannels);
-  }, [saveChannels, setValue]);
+  }, [setValue]);
 
   const hasChannel = useCallback(
     (channelId: string) => channels.some((channel) => channel.id === channelId),
@@ -118,8 +185,8 @@ export function useChannels() {
 
   const updateChannel = useCallback(
     (channelId: string, updates: Pick<Channel, "name" | "category">) => {
-      setValue((prev) => {
-        const next = prev.map((channel) =>
+      setValue((prev) =>
+        prev.map((channel) =>
           channel.id === channelId
             ? {
                 ...channel,
@@ -127,12 +194,10 @@ export function useChannels() {
                 category: updates.category.trim() || "General",
               }
             : channel,
-        );
-        void saveChannels(next);
-        return next;
-      });
+        ),
+      );
     },
-    [saveChannels, setValue],
+    [setValue],
   );
 
   return {
@@ -142,9 +207,10 @@ export function useChannels() {
     removeChannel,
     resetChannels,
     hasChannel,
-    isHydrated: isHydrated && !isSyncing,
+    isHydrated: true,
     syncError,
-    storageMode,
     storageDescription,
+    firebaseConfigured: firebaseEnabled,
+    firebaseSyncActive,
   };
 }
