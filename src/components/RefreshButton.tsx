@@ -28,7 +28,6 @@ export function RefreshButton({
         variant="outline"
         size="sm"
         onClick={onRefresh}
-        disabled={isLoading}
         aria-label="Refresh feed"
       >
         <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />

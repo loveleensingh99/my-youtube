@@ -1,20 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { buildEmbedUrl } from "@/utils/video";
 
 interface WatchPlayerProps {
   videoId: string;
   title: string;
-  onStarted?: () => void;
   className?: string;
 }
 
-export function WatchPlayer({ videoId, title, onStarted, className }: WatchPlayerProps) {
-  useEffect(() => {
-    onStarted?.();
-  }, [onStarted, videoId]);
+export function WatchPlayer({ videoId, title, className }: WatchPlayerProps) {
+  const embedUrl = buildEmbedUrl(videoId);
 
   return (
     <div
@@ -24,12 +20,12 @@ export function WatchPlayer({ videoId, title, onStarted, className }: WatchPlaye
       )}
     >
       <iframe
-        src={buildEmbedUrl(videoId)}
+        src={embedUrl}
         title={title}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
-        className="absolute inset-0 h-full w-full"
-        loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin"
+        className="absolute inset-0 h-full w-full border-0"
       />
     </div>
   );

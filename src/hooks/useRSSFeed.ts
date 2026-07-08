@@ -6,6 +6,8 @@ import { STORAGE_KEYS } from "@/constants/app";
 import type { Video } from "@/types";
 import { useLocalStorage } from "./useLocalStorage";
 
+const FEED_FETCH_TIMEOUT_MS = 30000;
+
 export function useRSSFeed() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,7 +24,12 @@ export function useRSSFeed() {
     setError(null);
 
     try {
-      const result = await fetchFeedVideos();
+      const result = await Promise.race([
+        fetchFeedVideos(),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error("Feed request timed out")), FEED_FETCH_TIMEOUT_MS);
+        }),
+      ]);
       setVideos(result.videos);
       setErrors(result.errors);
 

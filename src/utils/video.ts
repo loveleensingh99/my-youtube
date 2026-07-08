@@ -1,4 +1,44 @@
-import type { FeedFilter, Settings, Video } from "@/types";
+import type { FeedFilter, Settings, Video, WatchHistoryItem } from "@/types";
+
+export function isValidVideoId(videoId: string): boolean {
+  return /^[\w-]{11}$/.test(videoId);
+}
+
+export function resolveWatchVideo(
+  videoId: string,
+  videos: Video[],
+  history: WatchHistoryItem[],
+): Video | null {
+  const fromFeed = videos.find((video) => video.id === videoId);
+  if (fromFeed) return fromFeed;
+
+  const fromHistory = history.find((item) => item.videoId === videoId);
+  if (!fromHistory) return null;
+
+  return {
+    id: fromHistory.videoId,
+    title: fromHistory.title,
+    channelId: fromHistory.channelId,
+    channelName: fromHistory.channelName,
+    publishedAt: fromHistory.watchedAt,
+    thumbnailUrl: fromHistory.thumbnailUrl,
+    type: "video",
+    link: `https://www.youtube.com/watch?v=${fromHistory.videoId}`,
+  };
+}
+
+export function createFallbackWatchVideo(videoId: string): Video {
+  return {
+    id: videoId,
+    title: "Loading video details...",
+    channelId: "",
+    channelName: "YouTube",
+    publishedAt: new Date().toISOString(),
+    thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+    type: "video",
+    link: `https://www.youtube.com/watch?v=${videoId}`,
+  };
+}
 
 export function filterVideos(
   videos: Video[],
@@ -26,15 +66,18 @@ export function getChannelInitials(name: string): string {
     .join("");
 }
 
-export function buildEmbedUrl(videoId: string): string {
+export function buildEmbedUrl(videoId: string, origin?: string): string {
   const params = new URLSearchParams({
     modestbranding: "1",
     rel: "0",
     iv_load_policy: "3",
     fs: "1",
     playsinline: "1",
-    enablejsapi: "0",
   });
+
+  if (origin) {
+    params.set("origin", origin);
+  }
 
   return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
 }

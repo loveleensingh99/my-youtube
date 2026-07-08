@@ -27,6 +27,7 @@ interface FeedContextValue {
   clearHistory: () => void;
   continueWatching: WatchHistoryItem[];
   recentlyWatched: WatchHistoryItem[];
+  history: WatchHistoryItem[];
   filter: FeedFilter;
   setFilter: (filter: FeedFilter) => void;
   selectedChannel: string | null;
@@ -68,6 +69,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     clearHistory: history.clearHistory,
     continueWatching: history.continueWatching,
     recentlyWatched: history.recentlyWatched,
+    history: history.history,
     filter: filters.filter,
     setFilter: filters.setFilter,
     selectedChannel: filters.selectedChannel,
