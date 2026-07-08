@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
 import { ChannelAvatar } from "@/components/ChannelAvatar";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { useFeedContext } from "@/components/FeedProvider";
 import type { Settings, Video } from "@/types";
 import { formatDuration, formatPublishedDate, isNewVideo } from "@/utils/date";
@@ -26,6 +26,12 @@ function VideoCardComponent({
   const isNew = isNewVideo(video.publishedAt);
   const avatarUrl = video.channelId ? getChannelAvatar(video.channelId) : undefined;
 
+  const thumbnailSizes: Record<Settings["thumbnailSize"], string> = {
+    small: "(max-width: 768px) 100vw, 640px",
+    medium: "(max-width: 768px) 100vw, 960px",
+    large: "(max-width: 768px) 100vw, 1280px",
+  };
+
   return (
     <article className="group">
       <Link href={`/watch/${video.id}`} className="block" aria-label={`Watch ${video.title}`}>
@@ -37,11 +43,11 @@ function VideoCardComponent({
             thumbnailSize === "large" && "aspect-video min-h-[14rem]",
           )}
         >
-          <Image
-            src={video.thumbnailUrl}
-            alt=""
+          <VideoThumbnail
+            videoId={video.id}
+            thumbnailUrl={video.thumbnailUrl}
             fill
-            sizes="100vw"
+            sizes={thumbnailSizes[thumbnailSize]}
             className="object-cover"
           />
           {duration ? (

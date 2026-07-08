@@ -1,4 +1,114 @@
-import type { FeedFilter, Settings, Video } from "@/types";
+import type { FeedFilter, Settings, Video, VideoType } from "@/types";
+
+const YT_THUMBNAIL_PATTERN =
+  /https:\/\/i\.ytimg\.com\/vi\/([\w-]{11})\/([\w\d]+)\.jpg(?:\?.*)?$/i;
+
+export function extractYouTubeVideoIdFromThumbnailUrl(url: string): string | null {
+  const match = url.match(/\/vi\/([\w-]{11})\//);
+  return match?.[1] ?? null;
+}
+
+export type YouTubeThumbnailQuality =
+  | "maxresdefault"
+  | "sddefault"
+  | "hqdefault"
+  | "mqdefault"
+  | "default";
+
+export type YouTubeShortThumbnailQuality =
+  | "oar2"
+  | "oar1"
+  | "oardefault"
+  | "maxresdefault"
+  | "sddefault"
+  | "hqdefault";
+
+export function getYouTubeThumbnailUrl(
+  videoId: string,
+  quality: YouTubeThumbnailQuality = "maxresdefault",
+): string {
+  return `https://i.ytimg.com/vi/${videoId}/${quality}.jpg`;
+}
+
+export function getYouTubeShortThumbnailUrl(
+  videoId: string,
+  quality: YouTubeShortThumbnailQuality = "oar2",
+): string {
+  return `https://i.ytimg.com/vi/${videoId}/${quality}.jpg`;
+}
+
+export function upgradeYouTubeThumbnailUrl(url: string, videoId?: string): string {
+  const id = videoId ?? extractYouTubeVideoIdFromThumbnailUrl(url);
+  if (!id) return url;
+
+  const match = url.match(YT_THUMBNAIL_PATTERN);
+  if (match?.[2] === "maxresdefault") return url;
+
+  return getYouTubeThumbnailUrl(id, "maxresdefault");
+}
+
+export function upgradeYouTubeShortThumbnailUrl(url: string, videoId?: string): string {
+  const id = videoId ?? extractYouTubeVideoIdFromThumbnailUrl(url);
+  if (!id) return url;
+
+  const match = url.match(YT_THUMBNAIL_PATTERN);
+  if (match?.[2]?.startsWith("oar")) return url;
+
+  return getYouTubeShortThumbnailUrl(id, "oar2");
+}
+
+export function getYouTubeThumbnailFallback(
+  videoId: string,
+  currentUrl: string,
+): string | null {
+  if (currentUrl.includes("maxresdefault")) {
+    return getYouTubeThumbnailUrl(videoId, "sddefault");
+  }
+
+  if (currentUrl.includes("sddefault")) {
+    return getYouTubeThumbnailUrl(videoId, "hqdefault");
+  }
+
+  return null;
+}
+
+export function getYouTubeShortThumbnailFallback(
+  videoId: string,
+  currentUrl: string,
+): string | null {
+  if (currentUrl.includes("oar2")) {
+    return getYouTubeShortThumbnailUrl(videoId, "oar1");
+  }
+
+  if (currentUrl.includes("oar1") || currentUrl.includes("oardefault")) {
+    return getYouTubeShortThumbnailUrl(videoId, "maxresdefault");
+  }
+
+  if (currentUrl.includes("maxresdefault")) {
+    return getYouTubeThumbnailUrl(videoId, "sddefault");
+  }
+
+  if (currentUrl.includes("sddefault")) {
+    return getYouTubeThumbnailUrl(videoId, "hqdefault");
+  }
+
+  return null;
+}
+
+export function resolveVideoThumbnailUrl(
+  videoId: string,
+  type: VideoType,
+  existingUrl?: string,
+): string {
+  if (type === "short") {
+    return upgradeYouTubeShortThumbnailUrl(existingUrl ?? "", videoId);
+  }
+
+  return upgradeYouTubeThumbnailUrl(
+    existingUrl ?? getYouTubeThumbnailUrl(videoId),
+    videoId,
+  );
+}
 
 export function isValidVideoId(videoId: string): boolean {
   return /^[\w-]{11}$/.test(videoId);
@@ -11,7 +121,7 @@ export function createFallbackWatchVideo(videoId: string): Video {
     channelId: "",
     channelName: "YouTube",
     publishedAt: new Date().toISOString(),
-    thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+    thumbnailUrl: getYouTubeThumbnailUrl(videoId, "maxresdefault"),
     type: "video",
     link: `https://www.youtube.com/watch?v=${videoId}`,
   };

@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import Image from "next/image";
 import { ChannelAvatar } from "@/components/ChannelAvatar";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { useFeedContext } from "@/components/FeedProvider";
 import { WatchLoadMoreSkeleton } from "@/components/Skeleton";
 import { WatchPlayer } from "@/components/WatchPlayer";
@@ -153,9 +153,10 @@ export function MobileWatchFeed({
                   />
                 ) : (
                   <div className="relative h-full w-full">
-                    <Image
-                      src={video.thumbnailUrl}
-                      alt=""
+                    <VideoThumbnail
+                      variant="short"
+                      videoId={video.id}
+                      thumbnailUrl={video.thumbnailUrl}
                       fill
                       sizes="100vw"
                       className="object-contain"

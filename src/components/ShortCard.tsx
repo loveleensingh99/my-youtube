@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 import type { Settings, Video } from "@/types";
 import { formatDuration, isNewVideo } from "@/utils/date";
 import { cn } from "@/lib/utils";
@@ -20,11 +20,12 @@ function ShortCardComponent({ video, compactMode = false }: ShortCardProps) {
     <article className="group min-w-0">
       <Link href={`/watch/${video.id}`} className="block" aria-label={`Watch ${video.title}`}>
         <div className="relative aspect-[9/16] overflow-hidden rounded-xl bg-secondary">
-          <Image
-            src={video.thumbnailUrl}
-            alt=""
+          <VideoThumbnail
+            variant="short"
+            videoId={video.id}
+            thumbnailUrl={video.thumbnailUrl}
             fill
-            sizes="50vw"
+            sizes="(max-width: 768px) 50vw, 540px"
             className="object-cover"
           />
           {duration ? (

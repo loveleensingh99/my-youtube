@@ -2,6 +2,7 @@ import Parser from "rss-parser";
 import type { Channel, RSSFeed, RSSItem, Video } from "@/types";
 import { RSS_BASE_URL } from "@/constants/app";
 import { detectVideoType } from "@/lib/video-type";
+import { getYouTubeThumbnailUrl, resolveVideoThumbnailUrl } from "@/utils/video";
 
 const parser = new Parser({
   customFields: {
@@ -45,13 +46,18 @@ function extractThumbnail(item: Parser.Item & { mediaGroup?: unknown }): string 
   if (url) return url;
 
   const videoId = extractVideoId(item);
-  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+  return getYouTubeThumbnailUrl(videoId, "maxresdefault");
 }
 
 function mapRSSItemToVideo(item: Parser.Item, channel: Channel): Video {
   const id = extractVideoId(item);
   const durationSeconds = extractDuration(item);
   const link = item.link ?? `https://www.youtube.com/watch?v=${id}`;
+  const type = detectVideoType({
+    title: item.title ?? "",
+    link,
+    durationSeconds,
+  });
 
   return {
     id,
@@ -59,13 +65,9 @@ function mapRSSItemToVideo(item: Parser.Item, channel: Channel): Video {
     channelId: channel.id,
     channelName: channel.name,
     publishedAt: item.pubDate ?? item.isoDate ?? new Date().toISOString(),
-    thumbnailUrl: extractThumbnail(item),
+    thumbnailUrl: resolveVideoThumbnailUrl(id, type, extractThumbnail(item)),
     durationSeconds,
-    type: detectVideoType({
-      title: item.title ?? "",
-      link,
-      durationSeconds,
-    }),
+    type,
     link,
   };
 }

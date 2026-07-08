@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
 import { ChannelAvatar } from "@/components/ChannelAvatar";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { useFeedContext } from "@/components/FeedProvider";
 import type { Video } from "@/types";
 import { formatDuration, formatPublishedDate, isNewVideo } from "@/utils/date";
@@ -22,11 +22,11 @@ function UpNextVideoCardComponent({ video }: UpNextVideoCardProps) {
     <article className="group overflow-hidden bg-black">
       <Link href={`/watch/${video.id}`} className="block" aria-label={`Watch ${video.title}`}>
         <div className="relative aspect-video w-full bg-zinc-900">
-          <Image
-            src={video.thumbnailUrl}
-            alt=""
+          <VideoThumbnail
+            videoId={video.id}
+            thumbnailUrl={video.thumbnailUrl}
             fill
-            sizes="100vw"
+            sizes="(max-width: 768px) 100vw, 1280px"
             className="object-cover"
           />
           {duration ? (

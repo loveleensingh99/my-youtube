@@ -2,18 +2,23 @@ import { API_VIDEOS_PER_PAGE } from "@/constants/app";
 import { detectVideoType } from "@/lib/video-type";
 import type { ChannelFeedCursor, FeedCursor } from "@/types/feed";
 import type { Channel, Video } from "@/types";
+import { getYouTubeThumbnailUrl, resolveVideoThumbnailUrl } from "@/utils/video";
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
 interface PlaylistItemSnippet {
   title: string;
   publishedAt: string;
-  thumbnails?: {
-    high?: { url?: string };
-    medium?: { url?: string };
-    default?: { url?: string };
-  };
+  thumbnails?: YouTubeThumbnails;
   resourceId?: { videoId?: string };
+}
+
+interface YouTubeThumbnails {
+  maxres?: { url?: string };
+  standard?: { url?: string };
+  high?: { url?: string };
+  medium?: { url?: string };
+  default?: { url?: string };
 }
 
 interface PlaylistItem {
@@ -31,11 +36,7 @@ interface ChannelsResponse {
   items?: Array<{
     id?: string;
     snippet?: {
-      thumbnails?: {
-        high?: { url?: string };
-        medium?: { url?: string };
-        default?: { url?: string };
-      };
+      thumbnails?: YouTubeThumbnails;
     };
     contentDetails?: {
       relatedPlaylists?: { uploads?: string };
@@ -48,6 +49,8 @@ function getChannelAvatarUrl(
   snippet: NonNullable<ChannelsResponse["items"]>[number]["snippet"],
 ): string | undefined {
   return (
+    snippet?.thumbnails?.maxres?.url ??
+    snippet?.thumbnails?.standard?.url ??
     snippet?.thumbnails?.high?.url ??
     snippet?.thumbnails?.medium?.url ??
     snippet?.thumbnails?.default?.url
@@ -91,11 +94,7 @@ interface VideoDetailsItem {
     publishedAt?: string;
     channelId?: string;
     channelTitle?: string;
-    thumbnails?: {
-      high?: { url?: string };
-      medium?: { url?: string };
-      default?: { url?: string };
-    };
+    thumbnails?: YouTubeThumbnails;
   };
   contentDetails?: { duration?: string };
 }
@@ -123,19 +122,23 @@ function getThumbnailFromSnippet(
   videoId: string,
 ): string {
   return (
+    snippet?.thumbnails?.maxres?.url ??
+    snippet?.thumbnails?.standard?.url ??
     snippet?.thumbnails?.high?.url ??
     snippet?.thumbnails?.medium?.url ??
     snippet?.thumbnails?.default?.url ??
-    `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+    getYouTubeThumbnailUrl(videoId, "maxresdefault")
   );
 }
 
 function getThumbnailUrl(snippet: PlaylistItemSnippet, videoId: string): string {
   return (
+    snippet.thumbnails?.maxres?.url ??
+    snippet.thumbnails?.standard?.url ??
     snippet.thumbnails?.high?.url ??
     snippet.thumbnails?.medium?.url ??
     snippet.thumbnails?.default?.url ??
-    `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+    getYouTubeThumbnailUrl(videoId, "maxresdefault")
   );
 }
 
@@ -152,6 +155,8 @@ function mapPlaylistItemsToVideos(
 
     const durationSeconds = durations.get(videoId);
     const title = item.snippet.title;
+    const link = `https://www.youtube.com/watch?v=${videoId}`;
+    const type = detectVideoType({ title, link, durationSeconds });
 
     videos.push({
       id: videoId,
@@ -159,14 +164,14 @@ function mapPlaylistItemsToVideos(
       channelId: channel.id,
       channelName: channel.name,
       publishedAt: item.snippet.publishedAt,
-      thumbnailUrl: getThumbnailUrl(item.snippet, videoId),
+      thumbnailUrl: resolveVideoThumbnailUrl(
+        videoId,
+        type,
+        getThumbnailUrl(item.snippet, videoId),
+      ),
       durationSeconds,
-      type: detectVideoType({
-        title,
-        link: `https://www.youtube.com/watch?v=${videoId}`,
-        durationSeconds,
-      }),
-      link: `https://www.youtube.com/watch?v=${videoId}`,
+      type,
+      link,
     });
   }
 
@@ -342,6 +347,11 @@ export async function fetchVideoById(videoId: string, apiKey: string): Promise<V
 
   const durationSeconds = parseIsoDuration(item.contentDetails?.duration);
   const link = `https://www.youtube.com/watch?v=${videoId}`;
+  const type = detectVideoType({
+    title: item.snippet.title ?? "",
+    link,
+    durationSeconds,
+  });
 
   return {
     id: videoId,
@@ -349,13 +359,13 @@ export async function fetchVideoById(videoId: string, apiKey: string): Promise<V
     channelId: item.snippet.channelId ?? "",
     channelName: item.snippet.channelTitle ?? "YouTube",
     publishedAt: item.snippet.publishedAt ?? new Date().toISOString(),
-    thumbnailUrl: getThumbnailFromSnippet(item.snippet, videoId),
+    thumbnailUrl: resolveVideoThumbnailUrl(
+      videoId,
+      type,
+      getThumbnailFromSnippet(item.snippet, videoId),
+    ),
     durationSeconds,
-    type: detectVideoType({
-      title: item.snippet.title ?? "",
-      link,
-      durationSeconds,
-    }),
+    type,
     link,
   };
 }
