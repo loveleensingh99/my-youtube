@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
-import type { ThumbnailSize, Video } from "@/types";
+import type { Video } from "@/types";
 import { VideoCard } from "./VideoCard";
 import { VideoGridSkeleton } from "./Skeleton";
 import { EmptyState } from "./ErrorState";
@@ -13,8 +13,6 @@ interface VideoGridProps {
   isLoadingMore?: boolean;
   hasMore?: boolean;
   onLoadMore?: () => void;
-  compact?: boolean;
-  thumbnailSize?: ThumbnailSize;
   watchedIds?: Set<string>;
   onMarkWatched?: (video: Video) => void;
 }
@@ -25,8 +23,6 @@ export function VideoGrid({
   isLoadingMore = false,
   hasMore = false,
   onLoadMore,
-  compact = false,
-  thumbnailSize = "medium",
   watchedIds = new Set(),
   onMarkWatched,
 }: VideoGridProps) {
@@ -47,7 +43,7 @@ export function VideoGrid({
           loadMore();
         }
       },
-      { rootMargin: "320px" },
+      { rootMargin: "480px" },
     );
 
     observer.observe(node);
@@ -55,7 +51,7 @@ export function VideoGrid({
   }, [hasMore, loadMore, videos.length]);
 
   if (isLoading) {
-    return <VideoGridSkeleton compact={compact} />;
+    return <VideoGridSkeleton />;
   }
 
   if (videos.length === 0) {
@@ -64,13 +60,11 @@ export function VideoGrid({
 
   return (
     <>
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="divide-y divide-border">
         {videos.map((video) => (
           <VideoCard
             key={video.id}
             video={video}
-            compact={compact}
-            thumbnailSize={thumbnailSize}
             isWatched={watchedIds.has(video.id)}
             onMarkWatched={onMarkWatched}
           />
@@ -80,23 +74,19 @@ export function VideoGrid({
       {hasMore || isLoadingMore ? (
         <div
           ref={sentinelRef}
-          className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground"
+          className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground"
           aria-live="polite"
         >
           {isLoadingMore ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading more videos...
+              Loading more...
             </>
           ) : (
-            "Scroll for more videos"
+            "Scroll for more"
           )}
         </div>
-      ) : (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          You&apos;ve reached the end of the loaded feed.
-        </p>
-      )}
+      ) : null}
     </>
   );
 }

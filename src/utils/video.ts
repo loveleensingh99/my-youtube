@@ -58,6 +58,22 @@ export function filterVideos(
   });
 }
 
+export function filterWatchPlaylist(
+  videos: Video[],
+  filter: FeedFilter,
+  settings: Settings,
+  channelId?: string | null,
+): Video[] {
+  return videos.filter((video) => {
+    if (channelId && video.channelId !== channelId) return false;
+    if (filter === "videos" && video.type !== "video") return false;
+    if (filter === "shorts" && video.type !== "short") return false;
+    if (!settings.showVideos && video.type === "video") return false;
+    if (!settings.showShorts && video.type === "short") return false;
+    return true;
+  });
+}
+
 export function getChannelInitials(name: string): string {
   return name
     .split(" ")
@@ -66,17 +82,26 @@ export function getChannelInitials(name: string): string {
     .join("");
 }
 
-export function buildEmbedUrl(videoId: string, origin?: string): string {
+export function buildEmbedUrl(
+  videoId: string,
+  options?: { autoplay?: boolean; origin?: string },
+): string {
   const params = new URLSearchParams({
     modestbranding: "1",
     rel: "0",
     iv_load_policy: "3",
     fs: "1",
     playsinline: "1",
+    controls: "1",
+    enablejsapi: "1",
   });
 
-  if (origin) {
-    params.set("origin", origin);
+  if (options?.autoplay) {
+    params.set("autoplay", "1");
+  }
+
+  if (options?.origin) {
+    params.set("origin", options.origin);
   }
 
   return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;

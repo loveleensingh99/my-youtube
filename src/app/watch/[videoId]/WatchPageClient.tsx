@@ -2,19 +2,10 @@
 
 import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Header } from "@/components/Header";
-import { WatchPlayer } from "@/components/WatchPlayer";
-import { BackLink } from "@/components/HistorySection";
+import { MobileWatchFeed } from "@/components/MobileWatchFeed";
 import { ErrorState } from "@/components/ErrorState";
-import { Button } from "@/components/ui/button";
 import { useFeedContext } from "@/components/FeedProvider";
-import { formatFullDate } from "@/utils/date";
-import {
-  createFallbackWatchVideo,
-  getChannelInitials,
-  isValidVideoId,
-  resolveWatchVideo,
-} from "@/utils/video";
+import { filterWatchPlaylist, isValidVideoId } from "@/utils/video";
 
 interface WatchPageClientProps {
   videoId: string;
@@ -25,98 +16,100 @@ export function WatchPageClient({ videoId }: WatchPageClientProps) {
   const {
     videos,
     history,
-    markAsWatched,
-    removeFromHistory,
-    watchedIds,
-    refresh,
-    lastUpdatedLabel,
     isLoading,
+    hasMore,
+    isLoadingMore,
+    loadMore,
+    markAsWatched,
+    settings,
+    settingsHydrated,
+    filter,
+    selectedChannel,
   } = useFeedContext();
 
-  const resolvedVideo = useMemo(
-    () => resolveWatchVideo(videoId, videos, history),
-    [videoId, videos, history],
+  const playlist = useMemo(() => {
+    if (!settingsHydrated) return videos;
+
+    const scoped = filterWatchPlaylist(videos, filter, settings, selectedChannel);
+    if (scoped.some((video) => video.id === videoId)) {
+      return scoped;
+    }
+
+    const allChannels = filterWatchPlaylist(videos, filter, settings, null);
+    if (allChannels.some((video) => video.id === videoId)) {
+      return allChannels;
+    }
+
+    const fromHistory = history.find((item) => item.videoId === videoId);
+    if (fromHistory) {
+      return [
+        {
+          id: fromHistory.videoId,
+          title: fromHistory.title,
+          channelId: fromHistory.channelId,
+          channelName: fromHistory.channelName,
+          publishedAt: fromHistory.watchedAt,
+          thumbnailUrl: fromHistory.thumbnailUrl,
+          type: "video" as const,
+          link: `https://www.youtube.com/watch?v=${fromHistory.videoId}`,
+        },
+        ...scoped,
+      ];
+    }
+
+    return scoped.length > 0 ? scoped : videos;
+  }, [videos, filter, settings, selectedChannel, settingsHydrated, videoId, history]);
+
+  const handleMarkWatched = useCallback(
+    (video: (typeof playlist)[number]) => {
+      markAsWatched({
+        videoId: video.id,
+        title: video.title,
+        channelId: video.channelId,
+        channelName: video.channelName,
+        thumbnailUrl: video.thumbnailUrl,
+      });
+    },
+    [markAsWatched],
   );
-
-  const video = resolvedVideo ?? createFallbackWatchVideo(videoId);
-  const isMetadataPending = !resolvedVideo && isLoading;
-  const isUnknownVideo = !resolvedVideo && !isLoading;
-
-  const handleMarkWatched = useCallback(() => {
-    markAsWatched({
-      videoId: video.id,
-      title: video.title,
-      channelId: video.channelId,
-      channelName: video.channelName,
-      thumbnailUrl: video.thumbnailUrl,
-    });
-  }, [markAsWatched, video]);
 
   if (!isValidVideoId(videoId)) {
     return (
-      <>
-        <Header title="Watch" lastUpdatedLabel={lastUpdatedLabel} />
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-          <BackLink />
-          <ErrorState
-            title="Invalid video link"
-            description="This URL does not contain a valid YouTube video ID."
-            onRetry={() => router.push("/")}
-          />
-        </main>
-      </>
+      <main className="flex min-h-[100dvh] items-center px-4">
+        <ErrorState
+          title="Invalid video link"
+          description="This URL does not contain a valid YouTube video ID."
+          onRetry={() => router.push("/")}
+        />
+      </main>
+    );
+  }
+
+  if (isLoading && playlist.length === 0) {
+    return <main className="min-h-[100dvh] bg-black" />;
+  }
+
+  if (playlist.length === 0) {
+    return (
+      <main className="flex min-h-[100dvh] items-center px-4">
+        <ErrorState
+          title="No videos loaded"
+          description="Add channels and refresh your feed before watching."
+          onRetry={() => router.push("/")}
+        />
+      </main>
     );
   }
 
   return (
-    <>
-      <Header
-        title="Watch"
-        onRefresh={() => void refresh()}
-        isRefreshing={isLoading}
-        lastUpdatedLabel={lastUpdatedLabel}
-      />
-
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-        <BackLink />
-
-        <WatchPlayer videoId={videoId} title={video.title} />
-
-        {isUnknownVideo ? (
-          <p className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-            This video is not in your curated feed. It may be from a channel you have not added.
-          </p>
-        ) : null}
-
-        <div className="space-y-4 rounded-xl border border-border/60 bg-card/50 p-6 backdrop-blur-xl">
-          <div className="flex items-start gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 text-sm font-semibold">
-              {getChannelInitials(video.channelName)}
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                {isMetadataPending ? "Loading video details..." : video.title}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {video.channelName}
-                {!isMetadataPending ? ` · Published ${formatFullDate(video.publishedAt)}` : null}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            {watchedIds.has(video.id) ? (
-              <Button variant="outline" onClick={() => removeFromHistory(video.id)}>
-                Remove from history
-              </Button>
-            ) : (
-              <Button variant="outline" onClick={handleMarkWatched} disabled={isMetadataPending}>
-                Mark as watched
-              </Button>
-            )}
-          </div>
-        </div>
-      </main>
-    </>
+    <MobileWatchFeed
+      key={videoId}
+      videos={playlist}
+      initialVideoId={videoId}
+      hasMore={hasMore}
+      isLoadingMore={isLoadingMore}
+      onLoadMore={loadMore}
+      onMarkWatched={handleMarkWatched}
+    />
   );
 }

@@ -34,7 +34,12 @@ export function useChannels() {
 
       try {
         const result = await syncChannelsWithFile(channelsRef.current);
-        setValue(result.channels);
+        const currentIds = channelsRef.current.map((channel) => channel.id).sort().join("|");
+        const nextIds = result.channels.map((channel) => channel.id).sort().join("|");
+
+        if (currentIds !== nextIds) {
+          setValue(result.channels);
+        }
 
         if (result.error) {
           setSyncError(result.error);

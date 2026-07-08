@@ -5,26 +5,14 @@ import { SettingsForm } from "@/components/SettingsForm";
 import { useFeedContext } from "@/components/FeedProvider";
 
 export function SettingsPageClient() {
-  const {
-    settings,
-    updateSettings,
-    resetSettings,
-    clearHistory,
-    refresh,
-    lastUpdatedLabel,
-    isLoading,
-  } = useFeedContext();
+  const { settings, updateSettings, resetSettings, clearHistory, refresh, isLoading } =
+    useFeedContext();
 
   return (
     <>
-      <Header
-        title="Settings"
-        onRefresh={() => void refresh()}
-        isRefreshing={isLoading}
-        lastUpdatedLabel={lastUpdatedLabel}
-      />
+      <Header title="You" onRefresh={() => void refresh()} isRefreshing={isLoading} />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+      <main className="px-4 py-4">
         <SettingsForm
           settings={settings}
           onUpdate={updateSettings}

@@ -20,6 +20,10 @@ export function useWatchHistory() {
   const markAsWatched = useCallback(
     (item: Omit<WatchHistoryItem, "watchedAt"> & { watchedAt?: string }) => {
       setValue((prev) => {
+        if (prev[0]?.videoId === item.videoId) {
+          return prev;
+        }
+
         const filtered = prev.filter((entry) => entry.videoId !== item.videoId);
         return [
           {

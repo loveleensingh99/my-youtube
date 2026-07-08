@@ -12,7 +12,7 @@ import type { ChannelWithStats } from "@/types";
 
 export function ChannelsPageClient() {
   const router = useRouter();
-  const { channels, videosByChannel, isLoading, refresh, lastUpdatedLabel } = useFeedContext();
+  const { channels, videosByChannel, isLoading, refresh } = useFeedContext();
 
   const channelsWithStats = useMemo<ChannelWithStats[]>(() => {
     return channels.map((channel) => {
@@ -30,36 +30,24 @@ export function ChannelsPageClient() {
 
   return (
     <>
-      <Header
-        title="Channels"
-        onRefresh={() => void refresh()}
-        isRefreshing={isLoading}
-        lastUpdatedLabel={lastUpdatedLabel}
-      />
+      <Header title="Subscriptions" onRefresh={() => void refresh()} isRefreshing={isLoading} />
 
-      <main className="mx-auto w-full max-w-7xl flex-1 space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+      <main className="space-y-6 px-4 py-4">
         <ChannelManager />
-
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">Selected channels</h2>
-          <p className="text-sm text-muted-foreground">
-            Only content from these creators appears in your feed.
-          </p>
-        </div>
 
         {channels.length === 0 ? (
           <EmptyState
             title="No channels yet"
-            description="Add a YouTube channel above to start building your distraction-free feed."
+            description="Add a YouTube channel above to start building your feed."
           />
         ) : isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-3">
             {Array.from({ length: Math.min(channels.length, 4) }).map((_, index) => (
               <ChannelCardSkeleton key={index} />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-3">
             {channelsWithStats.map((channel) => (
               <ChannelCard
                 key={channel.id}
