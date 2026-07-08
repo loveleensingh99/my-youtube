@@ -5,12 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/Header";
 import { FilterBar } from "@/components/FilterBar";
 import { TagChips } from "@/components/TagChips";
-import { ActiveChannelFilter } from "@/components/ActiveChannelFilter";
 import { VideoGrid } from "@/components/VideoGrid";
 import { ErrorState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
 import { filterVideos } from "@/utils/video";
-import { getChannelName, getChannelTags } from "@/utils/channels";
+import { getChannelTags } from "@/utils/channels";
 
 export function HomePageClient() {
   const router = useRouter();
@@ -33,34 +32,33 @@ export function HomePageClient() {
     markAsWatched,
     filter,
     setFilter,
-    selectedChannel,
-    selectChannel,
     selectedTag,
     selectTag,
     clearFeedFilters,
   } = useFeedContext();
 
   const tags = useMemo(() => getChannelTags(channels), [channels]);
-  const selectedChannelName = useMemo(
-    () => (selectedChannel ? getChannelName(channels, selectedChannel) : null),
-    [channels, selectedChannel],
-  );
 
   useEffect(() => {
     if (channelParam) {
-      selectChannel(channelParam);
+      router.replace(`/channel/${channelParam}`);
+    }
+  }, [channelParam, router]);
+
+  useEffect(() => {
+    if (channelParam) {
       return;
     }
 
     if (tagParam) {
       selectTag(tagParam);
     }
-  }, [channelParam, tagParam, selectChannel, selectTag]);
+  }, [channelParam, tagParam, selectTag]);
 
   const filteredVideos = useMemo(() => {
     if (!settingsHydrated) return [];
-    return filterVideos(videos, filter, settings, watchedIds, selectedChannel);
-  }, [videos, filter, settings, watchedIds, selectedChannel, settingsHydrated]);
+    return filterVideos(videos, filter, settings, watchedIds);
+  }, [videos, filter, settings, watchedIds, settingsHydrated]);
 
   const handleSelectTag = useCallback(
     (tag: string | null) => {
@@ -76,19 +74,6 @@ export function HomePageClient() {
     [router, selectTag, clearFeedFilters],
   );
 
-  const handleChannelClick = useCallback(
-    (channelId: string) => {
-      selectChannel(channelId);
-      router.push(`/?channel=${channelId}`);
-    },
-    [router, selectChannel],
-  );
-
-  const handleClearChannelFilter = useCallback(() => {
-    clearFeedFilters();
-    router.push("/");
-  }, [clearFeedFilters, router]);
-
   return (
     <>
       <Header title="Home" onRefresh={() => void refresh()} isRefreshing={isLoading} />
@@ -97,15 +82,8 @@ export function HomePageClient() {
         tags={tags}
         selectedTag={selectedTag}
         onSelectTag={handleSelectTag}
-        allActive={!selectedChannel && !selectedTag}
+        allActive={!selectedTag}
       />
-
-      {selectedChannelName ? (
-        <ActiveChannelFilter
-          channelName={selectedChannelName}
-          onClear={handleClearChannelFilter}
-        />
-      ) : null}
 
       <FilterBar filter={filter} onFilterChange={setFilter} />
 
@@ -127,7 +105,6 @@ export function HomePageClient() {
             hasMore={hasMore}
             onLoadMore={() => void loadMore()}
             watchedIds={watchedIds}
-            onChannelClick={handleChannelClick}
             onMarkWatched={(video) =>
               markAsWatched({
                 videoId: video.id,

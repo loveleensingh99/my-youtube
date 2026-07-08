@@ -75,16 +75,12 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   const history = useWatchHistory();
   const filters = useFilters(settings.defaultFilter);
   const channelsToFetch = useMemo(() => {
-    if (filters.selectedChannel) {
-      return channels.filter((channel) => channel.id === filters.selectedChannel);
-    }
-
     if (filters.selectedTag) {
       return channels.filter((channel) => channel.category === filters.selectedTag);
     }
 
     return channels;
-  }, [channels, filters.selectedChannel, filters.selectedTag]);
+  }, [channels, filters.selectedTag]);
   const feed = useRSSFeed(channelsToFetch, settings.youtubeApiKey);
   const refreshState = useRefresh({
     settings,

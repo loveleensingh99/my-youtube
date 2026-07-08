@@ -82,7 +82,7 @@ function SidebarContent({
   const handleChannelSelect = (channelId: string) => {
     selectChannel(channelId);
     onNavigate?.();
-    router.push(`/?channel=${channelId}`);
+    router.push(`/channel/${channelId}`);
   };
 
   return (

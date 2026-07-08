@@ -1,18 +1,19 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { APP_NAME } from "@/constants/app";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   title?: string;
+  onBack?: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
   className?: string;
 }
 
-export function Header({ title, onRefresh, isRefreshing = false, className }: HeaderProps) {
+export function Header({ title, onBack, onRefresh, isRefreshing = false, className }: HeaderProps) {
   return (
     <header
       className={cn(
@@ -20,10 +21,23 @@ export function Header({ title, onRefresh, isRefreshing = false, className }: He
         className,
       )}
     >
-      <div className="flex min-w-0 items-center gap-2">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--yt-red)] text-xs font-bold text-white">
-          FT
-        </div>
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        {onBack ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0 rounded-full"
+            onClick={onBack}
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        ) : (
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--yt-red)] text-xs font-bold text-white">
+            FT
+          </div>
+        )}
         <div className="min-w-0">
           <p className="truncate text-base font-semibold tracking-tight">{title ?? APP_NAME}</p>
         </div>

@@ -12,24 +12,11 @@ interface VideoCardProps {
   video: Video;
   isWatched?: boolean;
   onMarkWatched?: (video: Video) => void;
-  onChannelClick?: (channelId: string) => void;
 }
 
-function VideoCardComponent({
-  video,
-  isWatched = false,
-  onMarkWatched,
-  onChannelClick,
-}: VideoCardProps) {
+function VideoCardComponent({ video, isWatched = false, onMarkWatched }: VideoCardProps) {
   const duration = formatDuration(video.durationSeconds);
-
-  const handleChannelClick = () => {
-    if (!video.channelId || !onChannelClick) {
-      return;
-    }
-
-    onChannelClick(video.channelId);
-  };
+  const channelProfileHref = video.channelId ? `/channel/${video.channelId}` : null;
 
   return (
     <article className="group">
@@ -56,15 +43,14 @@ function VideoCardComponent({
       </Link>
 
       <div className="flex gap-3 px-3 py-3">
-        {onChannelClick && video.channelId ? (
-          <button
-            type="button"
-            onClick={handleChannelClick}
+        {channelProfileHref ? (
+          <Link
+            href={channelProfileHref}
             className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground transition-colors hover:bg-secondary/80"
-            aria-label={`Show videos from ${video.channelName}`}
+            aria-label={`Open ${video.channelName} channel page`}
           >
             {getChannelInitials(video.channelName)}
-          </button>
+          </Link>
         ) : (
           <div
             className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground"
@@ -80,14 +66,13 @@ function VideoCardComponent({
               {video.title}
             </h3>
           </Link>
-          {onChannelClick && video.channelId ? (
-            <button
-              type="button"
-              onClick={handleChannelClick}
-              className="mt-1 text-left text-xs text-muted-foreground hover:text-foreground"
+          {channelProfileHref ? (
+            <Link
+              href={channelProfileHref}
+              className="mt-1 block text-xs text-muted-foreground hover:text-foreground"
             >
               {video.channelName} · {formatPublishedDate(video.publishedAt)}
-            </button>
+            </Link>
           ) : (
             <p className="mt-1 text-xs text-muted-foreground">
               {video.channelName} · {formatPublishedDate(video.publishedAt)}

@@ -14,9 +14,15 @@ interface FilterBarProps {
   filter: FeedFilter;
   onFilterChange: (filter: FeedFilter) => void;
   className?: string;
+  items?: { value: FeedFilter; label: string }[];
 }
 
-export function FilterBar({ filter, onFilterChange, className }: FilterBarProps) {
+export function FilterBar({
+  filter,
+  onFilterChange,
+  className,
+  items = filters,
+}: FilterBarProps) {
   return (
     <div
       className={cn(
@@ -26,7 +32,7 @@ export function FilterBar({ filter, onFilterChange, className }: FilterBarProps)
       role="tablist"
       aria-label="Feed filters"
     >
-      {filters.map((item) => (
+      {items.map((item) => (
         <Button
           key={item.value}
           variant={filter === item.value ? "default" : "secondary"}

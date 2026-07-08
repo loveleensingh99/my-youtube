@@ -53,7 +53,7 @@ export function ChannelsPageClient() {
                 key={channel.id}
                 channel={channel}
                 onSelect={(channelId) => {
-                  router.push(`/?channel=${channelId}`);
+                  router.push(`/channel/${channelId}`);
                 }}
               />
             ))}
