@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FEED_PAGE_SIZE } from "@/constants/app";
+import { useCallback, useEffect, useRef } from "react";
+import { Loader2 } from "lucide-react";
 import type { ThumbnailSize, Video } from "@/types";
-import { paginate } from "@/utils/video";
 import { VideoCard } from "./VideoCard";
 import { VideoGridSkeleton } from "./Skeleton";
 import { EmptyState } from "./ErrorState";
@@ -11,6 +10,9 @@ import { EmptyState } from "./ErrorState";
 interface VideoGridProps {
   videos: Video[];
   isLoading?: boolean;
+  isLoadingMore?: boolean;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
   compact?: boolean;
   thumbnailSize?: ThumbnailSize;
   watchedIds?: Set<string>;
@@ -20,24 +22,20 @@ interface VideoGridProps {
 export function VideoGrid({
   videos,
   isLoading = false,
+  isLoadingMore = false,
+  hasMore = false,
+  onLoadMore,
   compact = false,
   thumbnailSize = "medium",
   watchedIds = new Set(),
   onMarkWatched,
 }: VideoGridProps) {
-  const [page, setPage] = useState(1);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const visibleVideos = useMemo(
-    () => paginate(videos, page, FEED_PAGE_SIZE),
-    [page, videos],
-  );
-
-  const hasMore = visibleVideos.length < videos.length;
-
   const loadMore = useCallback(() => {
-    setPage((current) => current + 1);
-  }, []);
+    if (!hasMore || isLoadingMore || isLoading) return;
+    onLoadMore?.();
+  }, [hasMore, isLoading, isLoadingMore, onLoadMore]);
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -49,12 +47,12 @@ export function VideoGrid({
           loadMore();
         }
       },
-      { rootMargin: "240px" },
+      { rootMargin: "320px" },
     );
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [hasMore, loadMore, visibleVideos.length]);
+  }, [hasMore, loadMore, videos.length]);
 
   if (isLoading) {
     return <VideoGridSkeleton compact={compact} />;
@@ -67,7 +65,7 @@ export function VideoGrid({
   return (
     <>
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {visibleVideos.map((video) => (
+        {videos.map((video) => (
           <VideoCard
             key={video.id}
             video={video}
@@ -78,7 +76,27 @@ export function VideoGrid({
           />
         ))}
       </div>
-      {hasMore ? <div ref={sentinelRef} className="h-10" aria-hidden /> : null}
+
+      {hasMore || isLoadingMore ? (
+        <div
+          ref={sentinelRef}
+          className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground"
+          aria-live="polite"
+        >
+          {isLoadingMore ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading more videos...
+            </>
+          ) : (
+            "Scroll for more videos"
+          )}
+        </div>
+      ) : (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          You&apos;ve reached the end of the loaded feed.
+        </p>
+      )}
     </>
   );
 }

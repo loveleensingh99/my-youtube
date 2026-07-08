@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { formatLastUpdated } from "@/utils/date";
 import type { Settings } from "@/types";
 
@@ -8,19 +8,12 @@ interface UseRefreshOptions {
   settings: Settings;
   lastUpdated: string | null;
   onRefresh: () => Promise<void>;
-  isLoading: boolean;
 }
 
-export function useRefresh({
-  settings,
-  lastUpdated,
-  onRefresh,
-  isLoading,
-}: UseRefreshOptions) {
+export function useRefresh({ settings, lastUpdated, onRefresh }: UseRefreshOptions) {
   const refresh = useCallback(async () => {
-    if (isLoading) return;
     await onRefresh();
-  }, [isLoading, onRefresh]);
+  }, [onRefresh]);
 
   useEffect(() => {
     if (!settings.autoRefresh) return;
@@ -33,7 +26,10 @@ export function useRefresh({
     return () => window.clearInterval(timer);
   }, [refresh, settings.autoRefresh, settings.refreshInterval]);
 
-  const lastUpdatedLabel = formatLastUpdated(lastUpdated);
+  const lastUpdatedLabel = useMemo(
+    () => formatLastUpdated(lastUpdated),
+    [lastUpdated],
+  );
 
   return {
     refresh,

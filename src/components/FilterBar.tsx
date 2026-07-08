@@ -13,18 +13,10 @@ const filters: { value: FeedFilter; label: string }[] = [
 interface FilterBarProps {
   filter: FeedFilter;
   onFilterChange: (filter: FeedFilter) => void;
-  selectedChannelName?: string | null;
-  onClearChannel?: () => void;
   className?: string;
 }
 
-export function FilterBar({
-  filter,
-  onFilterChange,
-  selectedChannelName,
-  onClearChannel,
-  className,
-}: FilterBarProps) {
+export function FilterBar({ filter, onFilterChange, className }: FilterBarProps) {
   return (
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
       <div
@@ -46,13 +38,6 @@ export function FilterBar({
           </Button>
         ))}
       </div>
-
-      {selectedChannelName ? (
-        <Button variant="outline" size="sm" onClick={onClearChannel} className="rounded-lg">
-          Channel: {selectedChannelName}
-          <span className="ml-1 text-muted-foreground">×</span>
-        </Button>
-      ) : null}
     </div>
   );
 }

@@ -1,13 +1,12 @@
 "use server";
 
-import { channels } from "@/data/channels";
+import { getYoutubeApiKey } from "@/lib/env";
 import { fetchChannelFeed } from "@/lib/rss";
-import type { Video } from "@/types";
+import { fetchFeedBatchViaApi } from "@/lib/youtube-api";
+import type { FeedBatchResult, FeedCursor } from "@/types/feed";
+import type { Channel, Video } from "@/types";
 
-export async function fetchFeedVideos(): Promise<{
-  videos: Video[];
-  errors: string[];
-}> {
+async function fetchFeedBatchViaRss(channels: Channel[]): Promise<FeedBatchResult> {
   const results = await Promise.allSettled(
     channels.map(async (channel) => {
       const feed = await fetchChannelFeed(channel);
@@ -45,5 +44,58 @@ export async function fetchFeedVideos(): Promise<{
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
   );
 
-  return { videos, errors };
+  return {
+    videos,
+    cursor: { channels: {} },
+    hasMore: false,
+    errors,
+    source: "rss",
+  };
+}
+
+export async function fetchFeedBatch(
+  channels: Channel[],
+  youtubeApiKey?: string | null,
+  cursor?: FeedCursor | null,
+): Promise<FeedBatchResult> {
+  if (channels.length === 0) {
+    return {
+      videos: [],
+      cursor: { channels: {} },
+      hasMore: false,
+      errors: [],
+      source: "rss",
+    };
+  }
+
+  const apiKey = getYoutubeApiKey(youtubeApiKey);
+  if (apiKey) {
+    const result = await fetchFeedBatchViaApi(channels, apiKey, cursor);
+    return { ...result, source: "api" };
+  }
+
+  if (cursor && Object.keys(cursor.channels).length > 0) {
+    return {
+      videos: [],
+      cursor,
+      hasMore: false,
+      errors: [],
+      source: "rss",
+    };
+  }
+
+  return fetchFeedBatchViaRss(channels);
+}
+
+/** @deprecated Use fetchFeedBatch for paginated loading */
+export async function fetchFeedVideos(
+  channels: Channel[],
+  youtubeApiKey?: string | null,
+) {
+  const result = await fetchFeedBatch(channels, youtubeApiKey, null);
+  return {
+    videos: result.videos,
+    errors: result.errors,
+    source: result.source,
+  };
 }

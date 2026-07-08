@@ -1,34 +1,22 @@
 import type { Channel } from "@/types";
 
-export const channels: Channel[] = [
+export const defaultChannels: Channel[] = [
   {
-    id: "UCUAXFkF798GkHIXx0DWV2jk",
-    name: "Fireship",
-    category: "Development",
-  },
-  {
-    id: "UCVib8h6M-UyEBM4d-hlSOM",
-    name: "Theo",
-    category: "Development",
-  },
-  {
-    id: "UC0-1H-mf0F12vZv0BqE-g8",
-    name: "Vercel",
-    category: "Development",
-  },
-  {
-    id: "UC29ju8bifoCH7iGArSjTfA",
-    name: "Traversy Media",
-    category: "Development",
-  },
-  {
-    id: "UCsT0YIkkwnDmj-WaGWV9Scg",
-    name: "Code with Antonio",
-    category: "Development",
-  },
-  {
-    id: "UC8butISFwT-Wl7EV0hUK0BQ",
-    name: "freeCodeCamp",
+    id: "UCdvOCtR3a9ICLAw0DD3DpXg",
+    name: "bekifaayati",
     category: "Education",
   },
+  {
+    id: "UCY6N8zZhs2V7gNTUxPuKWoQ",
+    name: "Ishan Sharma",
+    category: "Career",
+  },
+  {
+    id: "UCRzYN32xtBf3Yxsx5BvJWJw",
+    name: "warikoo",
+    category: "Career",
+  },
 ];
+
+/** @deprecated Use defaultChannels or channels from useChannels / FeedContext */
+export const channels = defaultChannels;

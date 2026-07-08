@@ -2,16 +2,17 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { channels } from "@/data/channels";
 import { Header } from "@/components/Header";
 import { ChannelCard } from "@/components/ChannelCard";
+import { ChannelManager } from "@/components/ChannelManager";
 import { ChannelCardSkeleton } from "@/components/Skeleton";
+import { EmptyState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
 import type { ChannelWithStats } from "@/types";
 
 export function ChannelsPageClient() {
   const router = useRouter();
-  const { videosByChannel, isLoading, refresh, lastUpdatedLabel } = useFeedContext();
+  const { channels, videosByChannel, isLoading, refresh, lastUpdatedLabel } = useFeedContext();
 
   const channelsWithStats = useMemo<ChannelWithStats[]>(() => {
     return channels.map((channel) => {
@@ -25,7 +26,7 @@ export function ChannelsPageClient() {
         latestTitle: latest?.title,
       };
     });
-  }, [videosByChannel]);
+  }, [channels, videosByChannel]);
 
   return (
     <>
@@ -37,6 +38,8 @@ export function ChannelsPageClient() {
       />
 
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+        <ChannelManager />
+
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Selected channels</h2>
           <p className="text-sm text-muted-foreground">
@@ -44,9 +47,14 @@ export function ChannelsPageClient() {
           </p>
         </div>
 
-        {isLoading ? (
+        {channels.length === 0 ? (
+          <EmptyState
+            title="No channels yet"
+            description="Add a YouTube channel above to start building your distraction-free feed."
+          />
+        ) : isLoading ? (
           <div className="grid gap-4 md:grid-cols-2">
-            {Array.from({ length: 4 }).map((_, index) => (
+            {Array.from({ length: Math.min(channels.length, 4) }).map((_, index) => (
               <ChannelCardSkeleton key={index} />
             ))}
           </div>

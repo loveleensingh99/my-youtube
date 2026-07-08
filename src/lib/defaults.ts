@@ -10,4 +10,5 @@ export const defaultSettings: Settings = {
   hideWatchedVideos: false,
   thumbnailSize: "medium",
   defaultFilter: "all",
+  youtubeApiKey: "",
 };

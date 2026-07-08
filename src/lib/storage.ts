@@ -1,4 +1,5 @@
-import type { FeedFilter, Settings, ThumbnailSize, WatchHistoryItem } from "@/types";
+import type { Channel, FeedFilter, Settings, ThumbnailSize, WatchHistoryItem } from "@/types";
+import { defaultChannels } from "@/data/channels";
 import { defaultSettings } from "@/lib/defaults";
 
 const VALID_FILTERS: FeedFilter[] = ["all", "videos", "shorts"];
@@ -29,6 +30,8 @@ export function normalizeSettings(value: unknown): Settings {
     defaultFilter: VALID_FILTERS.includes(raw.defaultFilter as FeedFilter)
       ? (raw.defaultFilter as FeedFilter)
       : defaultSettings.defaultFilter,
+    youtubeApiKey:
+      typeof raw.youtubeApiKey === "string" ? raw.youtubeApiKey.trim() : defaultSettings.youtubeApiKey,
   };
 }
 
@@ -60,6 +63,32 @@ export function normalizeChannelId(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
+export function normalizeChannels(value: unknown, fallback: Channel[] = defaultChannels): Channel[] {
+  if (!Array.isArray(value)) {
+    return fallback;
+  }
+
+  const channels = value
+    .filter(
+      (item): item is Channel =>
+        Boolean(item) &&
+        typeof item === "object" &&
+        typeof (item as Channel).id === "string" &&
+        (item as Channel).id.startsWith("UC") &&
+        typeof (item as Channel).name === "string",
+    )
+    .map((item) => ({
+      id: item.id,
+      name: item.name.trim() || "YouTube Channel",
+      category:
+        typeof item.category === "string" && item.category.trim()
+          ? item.category.trim()
+          : "General",
+    }));
+
+  return channels.length > 0 ? channels : fallback;
+}
+
 export function clearFocusTubeStorage() {
   if (typeof window === "undefined") return;
 
@@ -69,5 +98,5 @@ export function clearFocusTubeStorage() {
     }
   });
 
-  window.dispatchEvent(new Event("focustube:storage"));
+  window.dispatchEvent(new CustomEvent("focustube:storage", { detail: { key: "*" } }));
 }

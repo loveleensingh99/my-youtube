@@ -34,6 +34,33 @@ export function SettingsForm({
     <div className="space-y-6">
       <Card>
         <CardHeader>
+          <CardTitle>YouTube Data API</CardTitle>
+          <CardDescription>
+            Optional override. Prefer adding your key to <code>.env.local</code> as{" "}
+            <code>YOUTUBE_API_KEY</code> so it stays on the server and out of the browser.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-2">
+            <Label htmlFor="youtubeApiKey">API key</Label>
+            <Input
+              id="youtubeApiKey"
+              type="password"
+              placeholder="Paste your YouTube Data API v3 key"
+              value={settings.youtubeApiKey}
+              onChange={(event) => onUpdate({ youtubeApiKey: event.target.value.trim() })}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Create a free key in Google Cloud Console, enable YouTube Data API v3, then add it to{" "}
+            <code>.env.local</code> in the project root. Restart the dev server after saving. You
+            can also paste it here as a fallback.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Feed</CardTitle>
           <CardDescription>Control what appears in your distraction-free feed.</CardDescription>
         </CardHeader>

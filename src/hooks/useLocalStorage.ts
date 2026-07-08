@@ -2,17 +2,31 @@
 
 import { useCallback, useRef, useSyncExternalStore } from "react";
 
-function subscribeToStorage(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-  window.addEventListener("focustube:storage", onStoreChange);
+function subscribeToStorage(key: string, onStoreChange: () => void) {
+  const handleScopedChange = (event: Event) => {
+    const detail = (event as CustomEvent<{ key?: string }>).detail;
+    if (detail?.key === "*" || detail?.key === key) {
+      onStoreChange();
+    }
+  };
+
+  const handleCrossTabChange = (event: StorageEvent) => {
+    if (event.key === null || event.key === key) {
+      onStoreChange();
+    }
+  };
+
+  window.addEventListener("focustube:storage", handleScopedChange);
+  window.addEventListener("storage", handleCrossTabChange);
+
   return () => {
-    window.removeEventListener("storage", onStoreChange);
-    window.removeEventListener("focustube:storage", onStoreChange);
+    window.removeEventListener("focustube:storage", handleScopedChange);
+    window.removeEventListener("storage", handleCrossTabChange);
   };
 }
 
-function notifyStorageChange() {
-  window.dispatchEvent(new Event("focustube:storage"));
+function notifyStorageChange(key: string) {
+  window.dispatchEvent(new CustomEvent("focustube:storage", { detail: { key } }));
 }
 
 export function useLocalStorage<T>(
@@ -53,7 +67,7 @@ export function useLocalStorage<T>(
   }, [key, normalize]);
 
   const storedValue = useSyncExternalStore(
-    subscribeToStorage,
+    (onStoreChange) => subscribeToStorage(key, onStoreChange),
     getSnapshot,
     () => initialValueRef.current,
   );
@@ -63,12 +77,16 @@ export function useLocalStorage<T>(
       const current = getSnapshot();
       const nextValue = value instanceof Function ? value(current) : value;
       const normalized = normalize(nextValue, initialValueRef.current);
+      const serialized = JSON.stringify(normalized);
+
+      if (cacheRef.current.raw === serialized) {
+        return;
+      }
 
       try {
-        const serialized = JSON.stringify(normalized);
         window.localStorage.setItem(key, serialized);
         cacheRef.current = { raw: serialized, value: normalized };
-        notifyStorageChange();
+        notifyStorageChange(key);
       } catch {
         cacheRef.current = { raw: null, value: normalized };
       }
@@ -84,7 +102,7 @@ export function useLocalStorage<T>(
     }
 
     cacheRef.current = { raw: null, value: initialValueRef.current };
-    notifyStorageChange();
+    notifyStorageChange(key);
   }, [key]);
 
   return { value: storedValue, setValue, removeValue, isHydrated: true } as const;

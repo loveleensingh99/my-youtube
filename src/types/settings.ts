@@ -11,4 +11,5 @@ export interface Settings {
   hideWatchedVideos: boolean;
   thumbnailSize: ThumbnailSize;
   defaultFilter: FeedFilter;
+  youtubeApiKey: string;
 }

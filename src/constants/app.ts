@@ -5,9 +5,12 @@ export const APP_DESCRIPTION =
 export const STORAGE_KEYS = {
   settings: "focustube:settings",
   watchHistory: "focustube:watch-history",
+  channels: "focustube:channels",
   lastRefresh: "focustube:last-refresh",
   selectedFilter: "focustube:selected-filter",
   selectedChannel: "focustube:selected-channel",
+  sidebarCollapsed: "focustube:sidebar-collapsed",
+  channelsSectionExpanded: "focustube:channels-section-expanded",
 } as const;
 
 export const RSS_BASE_URL =
@@ -24,4 +27,6 @@ export const YOUTUBE_EMBED_PARAMS = {
 export const NEW_VIDEO_THRESHOLD_HOURS = 24;
 export const SHORT_MAX_DURATION_SECONDS = 60;
 export const FEED_PAGE_SIZE = 12;
+export const API_VIDEOS_PER_PAGE = 15;
+export const RSS_MAX_VIDEOS_PER_CHANNEL = 15;
 export const DEFAULT_REFRESH_INTERVAL_MINUTES = 15;
