@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   lastRefresh: "focustube:last-refresh",
   selectedFilter: "focustube:selected-filter",
   selectedChannel: "focustube:selected-channel",
+  selectedTag: "focustube:selected-tag",
   sidebarCollapsed: "focustube:sidebar-collapsed",
   channelsSectionExpanded: "focustube:channels-section-expanded",
 } as const;

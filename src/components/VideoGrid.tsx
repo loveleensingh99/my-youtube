@@ -15,6 +15,7 @@ interface VideoGridProps {
   onLoadMore?: () => void;
   watchedIds?: Set<string>;
   onMarkWatched?: (video: Video) => void;
+  onChannelClick?: (channelId: string) => void;
 }
 
 export function VideoGrid({
@@ -25,6 +26,7 @@ export function VideoGrid({
   onLoadMore,
   watchedIds = new Set(),
   onMarkWatched,
+  onChannelClick,
 }: VideoGridProps) {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -67,6 +69,7 @@ export function VideoGrid({
             video={video}
             isWatched={watchedIds.has(video.id)}
             onMarkWatched={onMarkWatched}
+            onChannelClick={onChannelClick}
           />
         ))}
       </div>

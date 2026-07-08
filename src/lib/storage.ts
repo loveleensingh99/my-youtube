@@ -63,6 +63,15 @@ export function normalizeChannelId(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
+export function normalizeTag(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export function normalizeChannels(value: unknown, fallback: Channel[] = defaultChannels): Channel[] {
   if (!Array.isArray(value)) {
     return fallback;

@@ -48,6 +48,10 @@ interface FeedContextValue {
   selectedChannel: string | null;
   selectChannel: (channelId: string | null) => void;
   clearChannelFilter: () => void;
+  selectedTag: string | null;
+  selectTag: (tag: string | null) => void;
+  clearTagFilter: () => void;
+  clearFeedFilters: () => void;
   channelsSyncError: string | null;
   channelsStorageMode: ChannelsStorageMode;
   channelsStorageDescription: string;
@@ -71,9 +75,16 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   const history = useWatchHistory();
   const filters = useFilters(settings.defaultFilter);
   const channelsToFetch = useMemo(() => {
-    if (!filters.selectedChannel) return channels;
-    return channels.filter((channel) => channel.id === filters.selectedChannel);
-  }, [channels, filters.selectedChannel]);
+    if (filters.selectedChannel) {
+      return channels.filter((channel) => channel.id === filters.selectedChannel);
+    }
+
+    if (filters.selectedTag) {
+      return channels.filter((channel) => channel.category === filters.selectedTag);
+    }
+
+    return channels;
+  }, [channels, filters.selectedChannel, filters.selectedTag]);
   const feed = useRSSFeed(channelsToFetch, settings.youtubeApiKey);
   const refreshState = useRefresh({
     settings,
@@ -133,6 +144,10 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       selectedChannel: filters.selectedChannel,
       selectChannel: filters.selectChannel,
       clearChannelFilter: filters.clearChannelFilter,
+      selectedTag: filters.selectedTag,
+      selectTag: filters.selectTag,
+      clearTagFilter: filters.clearTagFilter,
+      clearFeedFilters: filters.clearFeedFilters,
       channelsSyncError,
       channelsStorageMode,
       channelsStorageDescription,
@@ -171,6 +186,10 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       filters.selectedChannel,
       filters.selectChannel,
       filters.clearChannelFilter,
+      filters.selectedTag,
+      filters.selectTag,
+      filters.clearTagFilter,
+      filters.clearFeedFilters,
       channelsSyncError,
       channelsStorageMode,
       channelsStorageDescription,

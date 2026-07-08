@@ -12,10 +12,24 @@ interface VideoCardProps {
   video: Video;
   isWatched?: boolean;
   onMarkWatched?: (video: Video) => void;
+  onChannelClick?: (channelId: string) => void;
 }
 
-function VideoCardComponent({ video, isWatched = false, onMarkWatched }: VideoCardProps) {
+function VideoCardComponent({
+  video,
+  isWatched = false,
+  onMarkWatched,
+  onChannelClick,
+}: VideoCardProps) {
   const duration = formatDuration(video.durationSeconds);
+
+  const handleChannelClick = () => {
+    if (!video.channelId || !onChannelClick) {
+      return;
+    }
+
+    onChannelClick(video.channelId);
+  };
 
   return (
     <article className="group">
@@ -42,12 +56,23 @@ function VideoCardComponent({ video, isWatched = false, onMarkWatched }: VideoCa
       </Link>
 
       <div className="flex gap-3 px-3 py-3">
-        <div
-          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground"
-          aria-hidden
-        >
-          {getChannelInitials(video.channelName)}
-        </div>
+        {onChannelClick && video.channelId ? (
+          <button
+            type="button"
+            onClick={handleChannelClick}
+            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground transition-colors hover:bg-secondary/80"
+            aria-label={`Show videos from ${video.channelName}`}
+          >
+            {getChannelInitials(video.channelName)}
+          </button>
+        ) : (
+          <div
+            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground"
+            aria-hidden
+          >
+            {getChannelInitials(video.channelName)}
+          </div>
+        )}
 
         <div className="min-w-0 flex-1">
           <Link href={`/watch/${video.id}`}>
@@ -55,9 +80,19 @@ function VideoCardComponent({ video, isWatched = false, onMarkWatched }: VideoCa
               {video.title}
             </h3>
           </Link>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {video.channelName} · {formatPublishedDate(video.publishedAt)}
-          </p>
+          {onChannelClick && video.channelId ? (
+            <button
+              type="button"
+              onClick={handleChannelClick}
+              className="mt-1 text-left text-xs text-muted-foreground hover:text-foreground"
+            >
+              {video.channelName} · {formatPublishedDate(video.publishedAt)}
+            </button>
+          ) : (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {video.channelName} · {formatPublishedDate(video.publishedAt)}
+            </p>
+          )}
         </div>
 
         {onMarkWatched && !isWatched ? (
