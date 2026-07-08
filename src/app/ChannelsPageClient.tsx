@@ -8,11 +8,20 @@ import { ChannelManager } from "@/components/ChannelManager";
 import { ChannelCardSkeleton, ChannelsPageSkeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import type { ChannelWithStats } from "@/types";
 
 export function ChannelsPageClient() {
   const router = useRouter();
-  const { channels, videosByChannel, isLoading, refresh, settingsHydrated } = useFeedContext();
+  const {
+    channels,
+    videosByChannel,
+    isLoading,
+    refresh,
+    feedSource,
+    settingsHydrated,
+  } = useFeedContext();
+  const pullToRefresh = usePullToRefresh({ onRefresh: refresh });
 
   const channelsWithStats = useMemo<ChannelWithStats[]>(() => {
     return channels.map((channel) => {
@@ -33,8 +42,13 @@ export function ChannelsPageClient() {
   }
 
   return (
-    <>
-      <Header title="Subscriptions" onRefresh={() => void refresh()} isRefreshing={isLoading} />
+    <div onTouchStart={pullToRefresh.onTouchStart} onTouchEnd={pullToRefresh.onTouchEnd}>
+      <Header
+        title="Subscriptions"
+        onRefresh={() => void refresh()}
+        isRefreshing={isLoading}
+        feedSource={feedSource}
+      />
 
       <main className="space-y-6 px-4 py-4">
         {channels.length === 0 ? (
@@ -64,6 +78,6 @@ export function ChannelsPageClient() {
 
         <ChannelManager />
       </main>
-    </>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, type RefObject } from "react";
-import type { FeedFilter } from "@/types";
+import type { FeedFilter, Settings } from "@/types";
 import type { Video } from "@/types";
 import { segmentFeedVideos, isShortsOnlyFeed } from "@/utils/feed-layout";
 import { VideoCard } from "./VideoCard";
@@ -16,6 +16,8 @@ interface VideoGridProps {
   hasMore?: boolean;
   onLoadMore?: () => void;
   feedFilter?: FeedFilter;
+  compactMode?: boolean;
+  thumbnailSize?: Settings["thumbnailSize"];
 }
 
 export function VideoGrid({
@@ -25,6 +27,8 @@ export function VideoGrid({
   hasMore = false,
   onLoadMore,
   feedFilter = "all",
+  compactMode = false,
+  thumbnailSize = "medium",
 }: VideoGridProps) {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const segments = useMemo(() => segmentFeedVideos(videos), [videos]);
@@ -65,7 +69,7 @@ export function VideoGrid({
       <>
         <div className="grid grid-cols-2 gap-x-2 gap-y-4 px-2 py-2">
           {videos.map((video) => (
-            <ShortCard key={video.id} video={video} />
+            <ShortCard key={video.id} video={video} compactMode={compactMode} />
           ))}
         </div>
 
@@ -85,7 +89,11 @@ export function VideoGrid({
           if (segment.kind === "video") {
             return (
               <div key={segment.video.id} className="border-b border-border">
-                <VideoCard video={segment.video} />
+                <VideoCard
+                  video={segment.video}
+                  compactMode={compactMode}
+                  thumbnailSize={thumbnailSize}
+                />
               </div>
             );
           }
@@ -96,7 +104,7 @@ export function VideoGrid({
               className="grid grid-cols-2 gap-x-2 gap-y-4 border-b border-border px-2 py-3"
             >
               {segment.videos.map((video) => (
-                <ShortCard key={video.id} video={video} />
+                <ShortCard key={video.id} video={video} compactMode={compactMode} />
               ))}
             </div>
           );

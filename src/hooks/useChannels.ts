@@ -116,9 +116,29 @@ export function useChannels() {
     [channels],
   );
 
+  const updateChannel = useCallback(
+    (channelId: string, updates: Pick<Channel, "name" | "category">) => {
+      setValue((prev) => {
+        const next = prev.map((channel) =>
+          channel.id === channelId
+            ? {
+                ...channel,
+                name: updates.name.trim() || channel.name,
+                category: updates.category.trim() || "General",
+              }
+            : channel,
+        );
+        void saveChannels(next);
+        return next;
+      });
+    },
+    [saveChannels, setValue],
+  );
+
   return {
     channels,
     addChannel,
+    updateChannel,
     removeChannel,
     resetChannels,
     hasChannel,

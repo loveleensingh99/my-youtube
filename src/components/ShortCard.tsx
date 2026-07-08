@@ -3,15 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
-import type { Video } from "@/types";
-import { formatDuration } from "@/utils/date";
+import type { Settings, Video } from "@/types";
+import { formatDuration, isNewVideo } from "@/utils/date";
+import { cn } from "@/lib/utils";
 
 interface ShortCardProps {
   video: Video;
+  compactMode?: boolean;
 }
 
-function ShortCardComponent({ video }: ShortCardProps) {
+function ShortCardComponent({ video, compactMode = false }: ShortCardProps) {
   const duration = formatDuration(video.durationSeconds);
+  const isNew = isNewVideo(video.publishedAt);
 
   return (
     <article className="group min-w-0">
@@ -29,12 +32,22 @@ function ShortCardComponent({ video }: ShortCardProps) {
               {duration}
             </span>
           ) : null}
+          {isNew ? (
+            <span className="absolute left-1.5 top-1.5 rounded bg-sky-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              New
+            </span>
+          ) : null}
         </div>
       </Link>
 
-      <div className="mt-2 space-y-1 px-0.5">
+      <div className={cn("space-y-1 px-0.5", compactMode ? "mt-1.5" : "mt-2")}>
         <Link href={`/watch/${video.id}`}>
-          <h3 className="line-clamp-2 text-xs font-medium leading-snug text-foreground">
+          <h3
+            className={cn(
+              "line-clamp-2 font-medium leading-snug text-foreground",
+              compactMode ? "text-[11px]" : "text-xs",
+            )}
+          >
             {video.title}
           </h3>
         </Link>

@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileWatchFeed } from "@/components/MobileWatchFeed";
+import { LongFormWatch } from "@/components/LongFormWatch";
 import { ErrorState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
 import { WatchPageSkeleton } from "@/components/Skeleton";
-import { filterWatchPlaylist, isValidVideoId } from "@/utils/video";
+import { fetchVideoDetails } from "@/app/actions/rss";
+import { createFallbackWatchVideo, filterWatchPlaylist, isValidVideoId } from "@/utils/video";
+import type { Video } from "@/types";
 
 interface WatchPageClientProps {
   videoId: string;
@@ -26,6 +29,9 @@ export function WatchPageClient({ videoId }: WatchPageClientProps) {
     selectedChannel,
   } = useFeedContext();
 
+  const [fetchedVideo, setFetchedVideo] = useState<Video | null>(null);
+  const [isFetchingVideo, setIsFetchingVideo] = useState(false);
+
   const playlist = useMemo(() => {
     if (!settingsHydrated) return videos;
 
@@ -42,6 +48,40 @@ export function WatchPageClient({ videoId }: WatchPageClientProps) {
     return scoped.length > 0 ? scoped : videos;
   }, [videos, filter, settings, selectedChannel, settingsHydrated, videoId]);
 
+  const activeVideo = useMemo(() => {
+    return (
+      playlist.find((video) => video.id === videoId) ??
+      fetchedVideo ??
+      videos.find((video) => video.id === videoId) ??
+      null
+    );
+  }, [playlist, fetchedVideo, videos, videoId]);
+
+  useEffect(() => {
+    if (activeVideo || !isValidVideoId(videoId)) {
+      return;
+    }
+
+    setIsFetchingVideo(true);
+    void fetchVideoDetails(videoId)
+      .then((video) => {
+        setFetchedVideo(video ?? createFallbackWatchVideo(videoId));
+      })
+      .finally(() => {
+        setIsFetchingVideo(false);
+      });
+  }, [activeVideo, videoId]);
+
+  const shortsPlaylist = useMemo(
+    () => playlist.filter((video) => video.type === "short"),
+    [playlist],
+  );
+
+  const upNext = useMemo(
+    () => playlist.filter((video) => video.type === "video" && video.id !== videoId),
+    [playlist, videoId],
+  );
+
   if (!isValidVideoId(videoId)) {
     return (
       <main className="flex min-h-[100dvh] items-center px-4">
@@ -54,30 +94,39 @@ export function WatchPageClient({ videoId }: WatchPageClientProps) {
     );
   }
 
-  if ((isLoading || !settingsHydrated) && playlist.length === 0) {
+  if ((isLoading || !settingsHydrated || isFetchingVideo) && !activeVideo) {
     return <WatchPageSkeleton />;
   }
 
-  if (playlist.length === 0) {
+  if (!activeVideo) {
     return (
       <main className="flex min-h-[100dvh] items-center px-4">
         <ErrorState
-          title="No videos loaded"
-          description="Add channels and refresh your feed before watching."
+          title="Video unavailable"
+          description="Could not load this video. Check your API key or try again later."
           onRetry={() => router.push("/")}
         />
       </main>
     );
   }
 
-  return (
-    <MobileWatchFeed
-      key={videoId}
-      videos={playlist}
-      initialVideoId={videoId}
-      hasMore={hasMore}
-      isLoadingMore={isLoadingMore}
-      onLoadMore={loadMore}
-    />
-  );
+  if (activeVideo.type === "short") {
+    const shortFeed =
+      shortsPlaylist.length > 0 && shortsPlaylist.some((video) => video.id === videoId)
+        ? shortsPlaylist
+        : [activeVideo];
+
+    return (
+      <MobileWatchFeed
+        key={videoId}
+        videos={shortFeed}
+        initialVideoId={videoId}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        onLoadMore={loadMore}
+      />
+    );
+  }
+
+  return <LongFormWatch video={activeVideo} upNext={upNext} />;
 }

@@ -1,8 +1,9 @@
 "use server";
 
 import { getYoutubeApiKey } from "@/lib/env";
+import { detectVideoType } from "@/lib/video-type";
 import { fetchChannelFeed } from "@/lib/rss";
-import { fetchFeedBatchViaApi } from "@/lib/youtube-api";
+import { fetchFeedBatchViaApi, fetchVideoById } from "@/lib/youtube-api";
 import type { FeedBatchResult, FeedCursor } from "@/types/feed";
 import type { Channel, Video } from "@/types";
 
@@ -18,12 +19,11 @@ async function fetchFeedBatchViaRss(channels: Channel[]): Promise<FeedBatchResul
         publishedAt: item.published,
         thumbnailUrl: item.thumbnailUrl,
         durationSeconds: item.durationSeconds,
-        type:
-          item.link.includes("/shorts/") ||
-          item.title.toLowerCase().includes("#shorts") ||
-          (item.durationSeconds !== undefined && item.durationSeconds <= 60)
-            ? ("short" as const)
-            : ("video" as const),
+        type: detectVideoType({
+          title: item.title,
+          link: item.link,
+          durationSeconds: item.durationSeconds,
+        }),
         link: item.link,
       }));
     }),
@@ -85,6 +85,19 @@ export async function fetchFeedBatch(
   }
 
   return fetchFeedBatchViaRss(channels);
+}
+
+export async function fetchVideoDetails(videoId: string): Promise<Video | null> {
+  const apiKey = getYoutubeApiKey(null);
+  if (!apiKey) {
+    return null;
+  }
+
+  try {
+    return await fetchVideoById(videoId, apiKey);
+  } catch {
+    return null;
+  }
 }
 
 /** @deprecated Use fetchFeedBatch for paginated loading */

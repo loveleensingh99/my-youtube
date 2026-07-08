@@ -7,7 +7,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { ChannelProfileHeader } from "@/components/ChannelProfileHeader";
 import { VideoGrid } from "@/components/VideoGrid";
 import { ChannelProfileHeaderSkeleton } from "@/components/Skeleton";
-import { EmptyState, ErrorState } from "@/components/ErrorState";
+import { EmptyState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
 import { useRSSFeed } from "@/hooks/useRSSFeed";
 import { filterVideos } from "@/utils/video";
@@ -25,7 +25,19 @@ interface ChannelProfilePageClientProps {
 
 export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClientProps) {
   const router = useRouter();
-  const { channels, settings, settingsHydrated } = useFeedContext();
+  const {
+    channels,
+    videos,
+    videosByChannel,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+    refresh,
+    feedSource,
+    settings,
+    settingsHydrated,
+  } = useFeedContext();
   const [filter, setFilter] = useState<FeedFilter>("all");
 
   const channel = useMemo(
@@ -33,23 +45,28 @@ export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClient
     [channels, channelId],
   );
 
-  const channelList = useMemo(() => (channel ? [channel] : []), [channel]);
-  const feed = useRSSFeed(channelList, settings.youtubeApiKey);
+  const fallbackFeed = useRSSFeed(channel ? [channel] : [], settings.youtubeApiKey);
+
+  const cachedChannelVideos = useMemo(
+    () => videosByChannel.get(channelId) ?? videos.filter((video) => video.channelId === channelId),
+    [videosByChannel, channelId, videos],
+  );
+  const channelVideos = cachedChannelVideos.length > 0 ? cachedChannelVideos : fallbackFeed.videos;
 
   const filteredVideos = useMemo(() => {
     if (!settingsHydrated) return [];
-    return filterVideos(feed.videos, filter, settings, channelId);
-  }, [feed.videos, filter, settings, channelId, settingsHydrated]);
+    return filterVideos(channelVideos, filter, settings, channelId);
+  }, [channelVideos, filter, settings, channelId, settingsHydrated]);
 
   const stats = useMemo(() => {
-    const videoCount = feed.videos.filter((video) => video.type === "video").length;
-    const shortCount = feed.videos.filter((video) => video.type === "short").length;
-    const latestUpload = feed.videos[0]?.publishedAt;
+    const videoCount = channelVideos.filter((video) => video.type === "video").length;
+    const shortCount = channelVideos.filter((video) => video.type === "short").length;
+    const latestUpload = channelVideos[0]?.publishedAt;
 
     return { videoCount, shortCount, latestUpload };
-  }, [feed.videos]);
+  }, [channelVideos]);
 
-  const isInitialLoading = feed.isLoading && feed.videos.length === 0;
+  const isInitialLoading = (isLoading || fallbackFeed.isLoading) && channelVideos.length === 0;
 
   if (!channel) {
     return (
@@ -70,8 +87,11 @@ export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClient
       <Header
         title={channel.name}
         onBack={() => router.back()}
-        onRefresh={() => void feed.refresh()}
-        isRefreshing={feed.isLoading}
+        onRefresh={() =>
+          cachedChannelVideos.length > 0 ? void refresh() : void fallbackFeed.refresh()
+        }
+        isRefreshing={cachedChannelVideos.length > 0 ? isLoading : fallbackFeed.isLoading}
+        feedSource={cachedChannelVideos.length > 0 ? feedSource : fallbackFeed.feedSource}
       />
 
       {isInitialLoading ? (
@@ -93,24 +113,18 @@ export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClient
       />
 
       <main className="flex-1">
-        {feed.error ? (
-          <div className="px-4 py-8">
-            <ErrorState
-              title="Could not load channel"
-              description={feed.error}
-              onRetry={() => void feed.refresh()}
-            />
-          </div>
-        ) : (
-          <VideoGrid
-            videos={filteredVideos}
-            isLoading={feed.isLoading || !settingsHydrated}
-            isLoadingMore={feed.isLoadingMore}
-            hasMore={feed.hasMore}
-            onLoadMore={() => void feed.loadMore()}
-            feedFilter={filter}
-          />
-        )}
+        <VideoGrid
+          videos={filteredVideos}
+          isLoading={isInitialLoading || !settingsHydrated}
+          isLoadingMore={cachedChannelVideos.length > 0 ? isLoadingMore : fallbackFeed.isLoadingMore}
+          hasMore={cachedChannelVideos.length > 0 ? hasMore : fallbackFeed.hasMore}
+          onLoadMore={() =>
+            cachedChannelVideos.length > 0 ? void loadMore() : void fallbackFeed.loadMore()
+          }
+          feedFilter={filter}
+          compactMode={settings.compactMode}
+          thumbnailSize={settings.thumbnailSize}
+        />
       </main>
     </>
   );

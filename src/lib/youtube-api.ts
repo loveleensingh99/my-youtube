@@ -1,6 +1,7 @@
-import { API_VIDEOS_PER_PAGE, SHORT_MAX_DURATION_SECONDS } from "@/constants/app";
+import { API_VIDEOS_PER_PAGE } from "@/constants/app";
+import { detectVideoType } from "@/lib/video-type";
 import type { ChannelFeedCursor, FeedCursor } from "@/types/feed";
-import type { Channel, Video, VideoType } from "@/types";
+import type { Channel, Video } from "@/types";
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
@@ -37,6 +38,17 @@ interface ChannelsResponse {
 
 interface VideoDetailsItem {
   id: string;
+  snippet?: {
+    title?: string;
+    publishedAt?: string;
+    channelId?: string;
+    channelTitle?: string;
+    thumbnails?: {
+      high?: { url?: string };
+      medium?: { url?: string };
+      default?: { url?: string };
+    };
+  };
   contentDetails?: { duration?: string };
 }
 
@@ -58,12 +70,16 @@ function parseIsoDuration(duration?: string): number | undefined {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-function detectVideoType(title: string, durationSeconds?: number): VideoType {
-  if (title.toLowerCase().includes("#shorts")) return "short";
-  if (durationSeconds !== undefined && durationSeconds <= SHORT_MAX_DURATION_SECONDS) {
-    return "short";
-  }
-  return "video";
+function getThumbnailFromSnippet(
+  snippet: VideoDetailsItem["snippet"],
+  videoId: string,
+): string {
+  return (
+    snippet?.thumbnails?.high?.url ??
+    snippet?.thumbnails?.medium?.url ??
+    snippet?.thumbnails?.default?.url ??
+    `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+  );
 }
 
 function getThumbnailUrl(snippet: PlaylistItemSnippet, videoId: string): string {
@@ -97,7 +113,11 @@ function mapPlaylistItemsToVideos(
       publishedAt: item.snippet.publishedAt,
       thumbnailUrl: getThumbnailUrl(item.snippet, videoId),
       durationSeconds,
-      type: detectVideoType(title, durationSeconds),
+      type: detectVideoType({
+        title,
+        link: `https://www.youtube.com/watch?v=${videoId}`,
+        durationSeconds,
+      }),
       link: `https://www.youtube.com/watch?v=${videoId}`,
     });
   }
@@ -254,5 +274,40 @@ export async function fetchFeedBatchViaApi(
     cursor: { channels: nextChannelCursors },
     hasMore,
     errors,
+  };
+}
+
+export async function fetchVideoById(videoId: string, apiKey: string): Promise<Video | null> {
+  const data = await youtubeGet<VideosListResponse>(
+    "videos",
+    {
+      part: "snippet,contentDetails",
+      id: videoId,
+    },
+    apiKey,
+  );
+
+  const item = data.items?.[0];
+  if (!item?.snippet) {
+    return null;
+  }
+
+  const durationSeconds = parseIsoDuration(item.contentDetails?.duration);
+  const link = `https://www.youtube.com/watch?v=${videoId}`;
+
+  return {
+    id: videoId,
+    title: item.snippet.title ?? "Untitled video",
+    channelId: item.snippet.channelId ?? "",
+    channelName: item.snippet.channelTitle ?? "YouTube",
+    publishedAt: item.snippet.publishedAt ?? new Date().toISOString(),
+    thumbnailUrl: getThumbnailFromSnippet(item.snippet, videoId),
+    durationSeconds,
+    type: detectVideoType({
+      title: item.snippet.title ?? "",
+      link,
+      durationSeconds,
+    }),
+    link,
   };
 }

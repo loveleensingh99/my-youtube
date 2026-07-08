@@ -8,6 +8,7 @@ import { VideoGrid } from "@/components/VideoGrid";
 import { HomePageSkeleton } from "@/components/Skeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { filterVideos } from "@/utils/video";
 import { getChannelTags } from "@/utils/channels";
 
@@ -26,6 +27,7 @@ export function HomePageClient() {
     loadMore,
     error,
     refresh,
+    feedSource,
     settings,
     settingsHydrated,
     filter,
@@ -36,6 +38,7 @@ export function HomePageClient() {
   } = useFeedContext();
 
   const tags = useMemo(() => getChannelTags(channels), [channels]);
+  const pullToRefresh = usePullToRefresh({ onRefresh: refresh });
 
   useEffect(() => {
     if (channelParam) {
@@ -77,8 +80,13 @@ export function HomePageClient() {
   }
 
   return (
-    <>
-      <Header title="Home" onRefresh={() => void refresh()} isRefreshing={isLoading} />
+    <div onTouchStart={pullToRefresh.onTouchStart} onTouchEnd={pullToRefresh.onTouchEnd}>
+      <Header
+        title="Home"
+        onRefresh={() => void refresh()}
+        isRefreshing={isLoading}
+        feedSource={feedSource}
+      />
 
       <FeedToolbar
         tags={tags}
@@ -107,9 +115,11 @@ export function HomePageClient() {
             hasMore={hasMore}
             onLoadMore={() => void loadMore()}
             feedFilter={filter}
+            compactMode={settings.compactMode}
+            thumbnailSize={settings.thumbnailSize}
           />
         )}
       </main>
-    </>
+    </div>
   );
 }

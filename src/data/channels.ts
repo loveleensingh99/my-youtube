@@ -16,6 +16,11 @@ export const defaultChannels: Channel[] = [
     name: "warikoo",
     category: "Career",
   },
+  {
+    id: "UCM3Bjfpp_OyOADpFbKr8Msg",
+    name: "Daily Post Punjabi",
+    category: "General",
+  },
 ];
 
 /** @deprecated Use defaultChannels or channels from useChannels / FeedContext */

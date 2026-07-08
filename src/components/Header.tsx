@@ -3,6 +3,7 @@
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { APP_NAME } from "@/constants/app";
 import { Button } from "@/components/ui/button";
+import { FeedSourceBadge } from "@/components/FeedSourceBadge";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -10,10 +11,18 @@ interface HeaderProps {
   onBack?: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  feedSource?: "api" | "rss";
   className?: string;
 }
 
-export function Header({ title, onBack, onRefresh, isRefreshing = false, className }: HeaderProps) {
+export function Header({
+  title,
+  onBack,
+  onRefresh,
+  isRefreshing = false,
+  feedSource,
+  className,
+}: HeaderProps) {
   return (
     <header
       className={cn(
@@ -38,8 +47,9 @@ export function Header({ title, onBack, onRefresh, isRefreshing = false, classNa
             FT
           </div>
         )}
-        <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
           <p className="truncate text-base font-semibold tracking-tight">{title ?? APP_NAME}</p>
+          {feedSource ? <FeedSourceBadge source={feedSource} /> : null}
         </div>
       </div>
 

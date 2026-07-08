@@ -1,6 +1,7 @@
 import Parser from "rss-parser";
-import type { Channel, RSSFeed, RSSItem, Video, VideoType } from "@/types";
-import { RSS_BASE_URL, SHORT_MAX_DURATION_SECONDS } from "@/constants/app";
+import type { Channel, RSSFeed, RSSItem, Video } from "@/types";
+import { RSS_BASE_URL } from "@/constants/app";
+import { detectVideoType } from "@/lib/video-type";
 
 const parser = new Parser({
   customFields: {
@@ -47,21 +48,6 @@ function extractThumbnail(item: Parser.Item & { mediaGroup?: unknown }): string 
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }
 
-function detectVideoType(
-  title: string,
-  link: string,
-  durationSeconds?: number,
-): VideoType {
-  const normalizedTitle = title.toLowerCase();
-  if (link.includes("/shorts/") || normalizedTitle.includes("#shorts")) {
-    return "short";
-  }
-  if (durationSeconds !== undefined && durationSeconds <= SHORT_MAX_DURATION_SECONDS) {
-    return "short";
-  }
-  return "video";
-}
-
 function mapRSSItemToVideo(item: Parser.Item, channel: Channel): Video {
   const id = extractVideoId(item);
   const durationSeconds = extractDuration(item);
@@ -75,7 +61,11 @@ function mapRSSItemToVideo(item: Parser.Item, channel: Channel): Video {
     publishedAt: item.pubDate ?? item.isoDate ?? new Date().toISOString(),
     thumbnailUrl: extractThumbnail(item),
     durationSeconds,
-    type: detectVideoType(item.title ?? "", link, durationSeconds),
+    type: detectVideoType({
+      title: item.title ?? "",
+      link,
+      durationSeconds,
+    }),
     link,
   };
 }
@@ -151,7 +141,11 @@ export function rssItemsToVideos(items: RSSItem[], channel: Channel): Video[] {
     publishedAt: item.published,
     thumbnailUrl: item.thumbnailUrl,
     durationSeconds: item.durationSeconds,
-    type: detectVideoType(item.title, item.link, item.durationSeconds),
+    type: detectVideoType({
+      title: item.title,
+      link: item.link,
+      durationSeconds: item.durationSeconds,
+    }),
     link: item.link,
   }));
 }
@@ -160,4 +154,5 @@ export function getChannelFeedUrl(channelId: string): string {
   return `${RSS_BASE_URL}${channelId}`;
 }
 
-export { mapRSSItemToVideo, detectVideoType };
+export { mapRSSItemToVideo };
+export { detectVideoType } from "@/lib/video-type";

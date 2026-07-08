@@ -173,6 +173,9 @@ export function MobileWatchFeed({
                     <p className="mt-1 text-xs text-white/70">
                       {video.channelName} · {formatPublishedDate(video.publishedAt)}
                     </p>
+                    <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-white/45">
+                      Swipe up or down
+                    </p>
                   </div>
                 </div>
               </div>
