@@ -1,9 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getStoredChannels, persistChannels, syncChannelsWithFile } from "@/app/actions/channels";
+import {
+  getChannelsStorageInfo,
+  persistChannels,
+  syncChannelsWithFile,
+} from "@/app/actions/channels";
 import { defaultChannels } from "@/data/channels";
 import { normalizeChannels } from "@/lib/storage";
+import type { ChannelsStorageMode } from "@/lib/channels-store";
 import { STORAGE_KEYS } from "@/constants/app";
 import type { Channel } from "@/types";
 import { useLocalStorage } from "./useLocalStorage";
@@ -16,6 +21,8 @@ export function useChannels() {
   );
   const [isSyncing, setIsSyncing] = useState(true);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [storageMode, setStorageMode] = useState<ChannelsStorageMode>("browser");
+  const [storageDescription, setStorageDescription] = useState("");
   const hasSyncedRef = useRef(false);
   const channelsRef = useRef(channels);
 
@@ -33,7 +40,14 @@ export function useChannels() {
       setSyncError(null);
 
       try {
-        const result = await syncChannelsWithFile(channelsRef.current);
+        const [result, storageInfo] = await Promise.all([
+          syncChannelsWithFile(channelsRef.current),
+          getChannelsStorageInfo(),
+        ]);
+
+        setStorageMode(storageInfo.mode);
+        setStorageDescription(storageInfo.description);
+
         const currentIds = channelsRef.current.map((channel) => channel.id).sort().join("|");
         const nextIds = result.channels.map((channel) => channel.id).sort().join("|");
 
@@ -45,28 +59,26 @@ export function useChannels() {
           setSyncError(result.error);
         }
       } catch {
-        try {
-          const serverChannels = await getStoredChannels();
-          setValue(serverChannels);
-        } catch {
-          setSyncError("Could not load channels from data/channels.json.");
-        }
+        setSyncError("Could not sync channels from the server.");
       } finally {
         setIsSyncing(false);
       }
     })();
   }, [isHydrated, setValue]);
 
-  const saveChannels = useCallback(async (next: Channel[]) => {
-    const result = await persistChannels(next);
-    if (!result.ok) {
-      setSyncError(result.error);
-      return false;
-    }
+  const saveChannels = useCallback(
+    async (next: Channel[]) => {
+      const result = await persistChannels(next);
+      if (!result.ok) {
+        setSyncError(result.error);
+        return false;
+      }
 
-    setSyncError(null);
-    return true;
-  }, []);
+      setSyncError(null);
+      return true;
+    },
+    [],
+  );
 
   const addChannel = useCallback(
     (channel: Channel) => {
@@ -112,5 +124,7 @@ export function useChannels() {
     hasChannel,
     isHydrated: isHydrated && !isSyncing,
     syncError,
+    storageMode,
+    storageDescription,
   };
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { WatchPlayer } from "@/components/WatchPlayer";
 import { Button } from "@/components/ui/button";
@@ -125,17 +125,6 @@ export function MobileWatchFeed({
     return () => observer.disconnect();
   }, [markVideoOnce, videos.length]);
 
-  const scrollToIndex = useCallback(
-    (index: number) => {
-      const container = containerRef.current;
-      if (!container || index < 0 || index >= videos.length) return;
-
-      const target = container.children[index] as HTMLElement | undefined;
-      target?.scrollIntoView({ behavior: "smooth", block: "start" });
-    },
-    [videos.length],
-  );
-
   if (!activeVideo) {
     return null;
   }
@@ -206,28 +195,6 @@ export function MobileWatchFeed({
                       {video.channelName} · {formatPublishedDate(video.publishedAt)}
                     </p>
                   </div>
-                </div>
-
-                <div className="mt-3 flex items-center justify-center gap-6 text-[11px] text-white/50">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 disabled:opacity-30"
-                    onClick={() => scrollToIndex(index - 1)}
-                    disabled={index === 0}
-                  >
-                    <ChevronUp className="h-4 w-4" />
-                    Previous
-                  </button>
-                  <span>Swipe up / down</span>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 disabled:opacity-30"
-                    onClick={() => scrollToIndex(index + 1)}
-                    disabled={index >= videos.length - 1 && !hasMore}
-                  >
-                    Next
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
                 </div>
               </div>
             </section>

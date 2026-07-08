@@ -8,6 +8,7 @@ import { useWatchHistory } from "@/hooks/useWatchHistory";
 import { useFilters } from "@/hooks/useFilters";
 import { useRefresh } from "@/hooks/useRefresh";
 import { useChannels } from "@/hooks/useChannels";
+import type { ChannelsStorageMode } from "@/lib/channels-store";
 import type { Channel, FeedFilter, Settings, Video, WatchHistoryItem } from "@/types";
 
 interface FeedContextValue {
@@ -48,6 +49,8 @@ interface FeedContextValue {
   selectChannel: (channelId: string | null) => void;
   clearChannelFilter: () => void;
   channelsSyncError: string | null;
+  channelsStorageMode: ChannelsStorageMode;
+  channelsStorageDescription: string;
 }
 
 const FeedContext = createContext<FeedContextValue | null>(null);
@@ -60,6 +63,8 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     hasChannel,
     isHydrated: settingsHydratedChannels,
     syncError: channelsSyncError,
+    storageMode: channelsStorageMode,
+    storageDescription: channelsStorageDescription,
   } = useChannels();
   const { settings, updateSettings, resetSettings, isHydrated: settingsHydrated } =
     useSettings();
@@ -129,6 +134,8 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       selectChannel: filters.selectChannel,
       clearChannelFilter: filters.clearChannelFilter,
       channelsSyncError,
+      channelsStorageMode,
+      channelsStorageDescription,
     }),
     [
       channels,
@@ -165,6 +172,8 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       filters.selectChannel,
       filters.clearChannelFilter,
       channelsSyncError,
+      channelsStorageMode,
+      channelsStorageDescription,
     ],
   );
 

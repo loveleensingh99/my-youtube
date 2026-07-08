@@ -10,8 +10,14 @@ import { Label } from "@/components/ui/label";
 import { useFeedContext } from "@/components/FeedProvider";
 
 export function ChannelManager() {
-  const { channels, addChannelFromInput, removeChannel, refresh, channelsSyncError } =
-    useFeedContext();
+  const {
+    channels,
+    addChannelFromInput,
+    removeChannel,
+    refresh,
+    channelsSyncError,
+    channelsStorageDescription,
+  } = useFeedContext();
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -47,9 +53,7 @@ export function ChannelManager() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-4 py-3 text-xs text-sky-100">
-          Channels are saved to <code>data/channels.json</code> on the server. Open the same app
-          URL from another phone or computer and your list follows you. You can also edit that file
-          manually and restart the app.
+          {channelsStorageDescription}
         </div>
 
         {channelsSyncError ? (

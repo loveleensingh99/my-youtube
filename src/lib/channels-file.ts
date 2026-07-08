@@ -12,7 +12,14 @@ export async function readChannelsFile(): Promise<Channel[]> {
     const parsed = JSON.parse(raw) as unknown;
     return normalizeChannels(parsed, defaultChannels);
   } catch {
-    await writeChannelsFile(defaultChannels);
+    if (process.env.VERCEL !== "1") {
+      try {
+        await writeChannelsFile(defaultChannels);
+      } catch {
+        // Ignore write failures (e.g. read-only filesystem).
+      }
+    }
+
     return defaultChannels;
   }
 }

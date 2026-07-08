@@ -1,6 +1,12 @@
 "use server";
 
-import { readChannelsFile, writeChannelsFile } from "@/lib/channels-file";
+import {
+  getChannelsStorageDescription,
+  getChannelsStorageMode,
+  readStoredChannels,
+  writeStoredChannels,
+  type ChannelsStorageMode,
+} from "@/lib/channels-store";
 import { defaultChannels } from "@/data/channels";
 import { fetchChannelFeed } from "@/lib/rss";
 import { normalizeChannels } from "@/lib/storage";
@@ -26,44 +32,67 @@ function isDefaultChannelList(channels: Channel[]): boolean {
   return sameChannelIds(channels, defaultChannels);
 }
 
+export async function getChannelsStorageInfo(): Promise<{
+  mode: ChannelsStorageMode;
+  description: string;
+}> {
+  const mode = getChannelsStorageMode();
+  return {
+    mode,
+    description: getChannelsStorageDescription(mode),
+  };
+}
+
+/** @deprecated Use readStoredChannels via syncChannelsWithFile */
 export async function getStoredChannels(): Promise<Channel[]> {
-  return readChannelsFile();
+  return readStoredChannels();
 }
 
 export async function persistChannels(
   channels: Channel[],
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  try {
-    const normalized = normalizeChannels(channels, []);
-    await writeChannelsFile(normalized);
-    return { ok: true };
-  } catch {
-    return {
-      ok: false,
-      error:
-        "Could not save channels to data/channels.json. If you deploy on Vercel, use a VPS or edit the file in your repo instead.",
-    };
-  }
+  return writeStoredChannels(channels);
 }
 
 export async function syncChannelsWithFile(
   localChannels: Channel[],
-): Promise<{ channels: Channel[]; persisted: boolean; error?: string }> {
-  const fileChannels = await readChannelsFile();
+): Promise<{
+  channels: Channel[];
+  persisted: boolean;
+  storageMode: ChannelsStorageMode;
+  error?: string;
+}> {
+  const storageMode = getChannelsStorageMode();
 
-  if (isDefaultChannelList(fileChannels) && !isDefaultChannelList(localChannels)) {
-    const result = await persistChannels(localChannels);
+  if (storageMode === "browser") {
+    return {
+      channels: localChannels,
+      persisted: false,
+      storageMode,
+    };
+  }
+
+  const storedChannels = await readStoredChannels();
+
+  if (isDefaultChannelList(storedChannels) && !isDefaultChannelList(localChannels)) {
+    const result = await writeStoredChannels(localChannels);
     if (!result.ok) {
-      return { channels: localChannels, persisted: false, error: result.error };
+      return {
+        channels: localChannels,
+        persisted: false,
+        storageMode,
+        error: result.error,
+      };
     }
-    return { channels: localChannels, persisted: true };
+
+    return { channels: localChannels, persisted: true, storageMode };
   }
 
-  if (!sameChannelIds(fileChannels, localChannels)) {
-    return { channels: fileChannels, persisted: false };
+  if (!sameChannelIds(storedChannels, localChannels)) {
+    return { channels: storedChannels, persisted: false, storageMode };
   }
 
-  return { channels: fileChannels, persisted: false };
+  return { channels: storedChannels, persisted: false, storageMode };
 }
 
 async function fetchChannelIdFromHandle(handle: string): Promise<string | null> {
