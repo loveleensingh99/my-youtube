@@ -34,7 +34,7 @@ function getErrorMessage(err: unknown): string {
   const message = err instanceof Error ? err.message : "Failed to load Facebook posts";
 
   if (message.includes("permission")) {
-    return "Firestore rules need to be published. Open Firebase Console → Firestore → Rules → Publish the rules from firestore.rules.";
+    return "Live site fix: In Vercel → Settings → Environment Variables, add FIREBASE_SERVICE_ACCOUNT_JSON (paste firebase-service-account.json as one line), then redeploy. Or publish Firestore rules in Firebase Console → Firestore → Rules.";
   }
 
   return message;

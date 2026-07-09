@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "scrape:facebook": "tsx scripts/facebook-scraper/index.ts",
-    "facebook:login": "tsx scripts/facebook-scraper/save-login.ts"
+    "facebook:login": "tsx scripts/facebook-scraper/save-login.ts",
+    "vercel:firebase-env": "tsx scripts/print-vercel-firebase-env.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
