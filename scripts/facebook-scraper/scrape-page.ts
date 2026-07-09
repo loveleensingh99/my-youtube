@@ -168,8 +168,8 @@ export async function scrapeFacebookPage(
         let href = "";
         let postId = null;
 
-        for (const link of links) {
-          const candidate = link.href ?? "";
+          for (const link of links) {
+            const candidate = (link as HTMLAnchorElement)?.href ?? "";
           if (!candidate) {
             continue;
           }
@@ -211,7 +211,7 @@ export async function scrapeFacebookPage(
           article.querySelector('img[src*="scontent"]') ??
           article.querySelector('img[src*="fbcdn"]');
 
-        const imageUrl = image?.src ?? "";
+        const imageUrl = (image as HTMLImageElement)?.src ?? "";
 
         const timeNode =
           article.querySelector("abbr[aria-label]") ??
