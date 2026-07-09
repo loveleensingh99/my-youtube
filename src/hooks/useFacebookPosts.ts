@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FACEBOOK_POSTS_PAGE_SIZE } from "@/constants/app";
 import { fetchFacebookPostsAction } from "@/app/actions/facebook-posts";
+import { FACEBOOK_POSTS_PAGE_SIZE } from "@/constants/app";
 import { isFirebaseConfigured } from "@/lib/firebase/config";
-import type { FacebookPost } from "@/types/facebook";
+import { fetchFacebookPostsPage } from "@/lib/firebase/facebook-posts";
+import type { FacebookPost, FacebookPostsPage } from "@/types/facebook";
 
 interface UseFacebookPostsResult {
   posts: FacebookPost[];
@@ -15,6 +16,28 @@ interface UseFacebookPostsResult {
   isConfigured: boolean;
   loadMore: () => void;
   refresh: () => void;
+}
+
+async function loadPostsPage(
+  cursorId: string | null,
+  pageSize: number,
+): Promise<FacebookPostsPage> {
+  const adminPage = await fetchFacebookPostsAction(cursorId, pageSize);
+  if (adminPage) {
+    return adminPage;
+  }
+
+  return fetchFacebookPostsPage(pageSize, cursorId);
+}
+
+function getErrorMessage(err: unknown): string {
+  const message = err instanceof Error ? err.message : "Failed to load Facebook posts";
+
+  if (message.includes("permission")) {
+    return "Firestore rules need to be published. Open Firebase Console → Firestore → Rules → Publish the rules from firestore.rules.";
+  }
+
+  return message;
 }
 
 export function useFacebookPosts(): UseFacebookPostsResult {
@@ -40,12 +63,12 @@ export function useFacebookPosts(): UseFacebookPostsResult {
     cursorRef.current = null;
 
     try {
-      const page = await fetchFacebookPostsAction(null, FACEBOOK_POSTS_PAGE_SIZE);
+      const page = await loadPostsPage(null, FACEBOOK_POSTS_PAGE_SIZE);
       cursorRef.current = page.lastDocId;
       setPosts(page.posts);
       setHasMore(page.hasMore);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load Facebook posts");
+      setError(getErrorMessage(err));
       setPosts([]);
       setHasMore(false);
     } finally {
@@ -62,7 +85,7 @@ export function useFacebookPosts(): UseFacebookPostsResult {
     setError(null);
 
     try {
-      const page = await fetchFacebookPostsAction(cursorRef.current, FACEBOOK_POSTS_PAGE_SIZE);
+      const page = await loadPostsPage(cursorRef.current, FACEBOOK_POSTS_PAGE_SIZE);
       cursorRef.current = page.lastDocId;
       setPosts((current) => {
         const seen = new Set(current.map((post) => post.postId));
@@ -76,7 +99,7 @@ export function useFacebookPosts(): UseFacebookPostsResult {
       });
       setHasMore(page.hasMore);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load more Facebook posts");
+      setError(getErrorMessage(err));
     } finally {
       setIsLoadingMore(false);
     }

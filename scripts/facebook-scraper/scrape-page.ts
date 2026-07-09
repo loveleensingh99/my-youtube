@@ -120,18 +120,26 @@ export async function scrapeFacebookPage(
     url: targetUrl,
   });
 
-  await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.goto(targetUrl, {
+    waitUntil: "domcontentloaded",
+    timeout: 60_000,
+  });
   await dismissCookieBanner(page);
 
   await page
-    .waitForSelector('[role="article"], [data-pagelet="ProfileTimeline"]', { timeout: 15_000 })
+    .waitForSelector('[role="article"], [data-pagelet="ProfileTimeline"]', {
+      timeout: 15_000,
+    })
     .catch(() => undefined);
 
   await page.waitForTimeout(3000);
   await scrollFeed(page);
 
   const pageTitle = await page.title();
-  if (/log in|login|sign up/i.test(pageTitle) || (await page.locator('input[name="email"]').count()) > 0) {
+  if (
+    /log in|login|sign up/i.test(pageTitle) ||
+    (await page.locator('input[name="email"]').count()) > 0
+  ) {
     logger.warn("Facebook login page detected — run: npm run facebook:login", {
       pageId: pageConfig.pageId,
     });
@@ -152,7 +160,9 @@ export async function scrapeFacebookPage(
         /fbid=(\d+)/,
       ];
 
-      const articles = Array.from(document.querySelectorAll('[role="article"]'));
+      const articles = Array.from(
+        document.querySelectorAll('[role="article"]'),
+      );
 
       for (const article of articles) {
         if (results.length >= maxPosts) {
@@ -168,8 +178,8 @@ export async function scrapeFacebookPage(
         let href = "";
         let postId = null;
 
-          for (const link of links) {
-            const candidate = (link as HTMLAnchorElement)?.href ?? "";
+        for (const link of links) {
+          const candidate = (link as HTMLAnchorElement)?.href ?? "";
           if (!candidate) {
             continue;
           }
@@ -202,7 +212,9 @@ export async function scrapeFacebookPage(
         const captionNode =
           article.querySelector('[data-ad-preview="message"]') ??
           article.querySelector('[data-ad-comet-preview="message"]') ??
-          article.querySelector('div[data-ad-rendering-role="story_message"]') ??
+          article.querySelector(
+            'div[data-ad-rendering-role="story_message"]',
+          ) ??
           article.querySelector('div[dir="auto"]');
 
         const caption = captionNode?.textContent?.trim() ?? "";
@@ -223,7 +235,8 @@ export async function scrapeFacebookPage(
           timeNode?.textContent?.trim() ||
           new Date().toISOString();
 
-        const postUrl = href || `https://www.facebook.com/${pageId}/posts/${postId}`;
+        const postUrl =
+          href || `https://www.facebook.com/${pageId}/posts/${postId}`;
 
         seen.add(postId);
         results.push({
@@ -245,7 +258,9 @@ export async function scrapeFacebookPage(
       ...post,
       postId: normalizePostId(post.postId),
       createdTime: parseRelativeTime(post.createdTime),
-      postUrl: post.postUrl || `https://www.facebook.com/${pageConfig.pageId}/posts/${post.postId}`,
+      postUrl:
+        post.postUrl ||
+        `https://www.facebook.com/${pageConfig.pageId}/posts/${post.postId}`,
     }))
     .filter((post) => post.postId);
 

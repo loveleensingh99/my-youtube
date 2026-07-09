@@ -22,11 +22,20 @@ function readServiceAccountFromPath(filePath: string): Record<string, string> {
 }
 
 export function isFirebaseAdminConfigured(): boolean {
-  return Boolean(
-    process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim() ||
-      process.env.FIREBASE_SERVICE_ACCOUNT_PATH?.trim() ||
-      process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim(),
-  );
+  const inlineJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
+  if (inlineJson) {
+    return true;
+  }
+
+  const filePath =
+    process.env.FIREBASE_SERVICE_ACCOUNT_PATH?.trim() ||
+    process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim();
+
+  if (!filePath) {
+    return false;
+  }
+
+  return existsSync(resolve(process.cwd(), filePath));
 }
 
 function getServiceAccount(): Record<string, string> {
