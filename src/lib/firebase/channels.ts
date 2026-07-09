@@ -5,8 +5,7 @@ import {
   setDoc,
   type Unsubscribe,
 } from "firebase/firestore";
-import { normalizeChannels } from "@/lib/storage";
-import { defaultChannels } from "@/data/channels";
+import { normalizeRemoteChannels } from "@/lib/storage";
 import type { Channel } from "@/types";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { getFirebaseSyncKey } from "@/lib/firebase/config";
@@ -66,7 +65,7 @@ export function subscribeRemoteChannels(
 
       const data = snapshot.data();
       onChange({
-        channels: normalizeChannels(data.channels, defaultChannels),
+        channels: normalizeRemoteChannels(data.channels),
         updatedAt: getRemoteUpdatedAt(data.updatedAt),
       });
     },

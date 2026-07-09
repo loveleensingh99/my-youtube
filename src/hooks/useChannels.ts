@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { enrichChannelAvatars } from "@/app/actions/channels";
 import { defaultChannels } from "@/data/channels";
 import {
   channelIdsKey,
   getLocalChannelsUpdatedAt,
   hasDeletedChannelsLocally,
+  hasPersistedLocalChannels,
   touchLocalChannelsUpdatedAt,
 } from "@/lib/channels-sync-state";
 import { saveRemoteChannels, subscribeRemoteChannels } from "@/lib/firebase/channels";
@@ -18,6 +19,61 @@ import { useLocalStorage } from "./useLocalStorage";
 
 function getChannelIds(channels: Channel[]): string[] {
   return channels.map((channel) => channel.id);
+}
+
+function isDefaultChannelIds(channelIds: string[]): boolean {
+  return channelIdsKey(channelIds) === channelIdsKey(getChannelIds(defaultChannels));
+}
+
+function shouldPreferLocalOnSeed(
+  localChannels: Channel[],
+  remoteChannels: Channel[],
+  localUpdatedAt: number,
+  remoteUpdatedAt: number,
+): boolean {
+  const localIds = new Set(getChannelIds(localChannels));
+  const remoteIds = new Set(getChannelIds(remoteChannels));
+  const localIdsKey = channelIdsKey([...localIds]);
+  const remoteIdsKey = channelIdsKey([...remoteIds]);
+
+  if (localIdsKey === remoteIdsKey) {
+    return false;
+  }
+
+  const deletedLocally =
+    hasDeletedChannelsLocally(localIds, remoteIds) && localIds.size <= remoteIds.size;
+
+  if (deletedLocally) {
+    return true;
+  }
+
+  if (localUpdatedAt > remoteUpdatedAt) {
+    return true;
+  }
+
+  if (
+    localUpdatedAt === 0 &&
+    hasPersistedLocalChannels() &&
+    localChannels.length > 0 &&
+    (remoteUpdatedAt === 0 || isDefaultChannelIds(getChannelIds(remoteChannels)))
+  ) {
+    return true;
+  }
+
+  return localUpdatedAt > 0 && localUpdatedAt >= remoteUpdatedAt;
+}
+
+function applyRemoteChannels(
+  remoteChannels: Channel[],
+  remoteUpdatedAt: number,
+  persistChannelsLocally: (next: Channel[]) => void,
+  applyingRemoteRef: MutableRefObject<boolean>,
+  lastSavedIdsKeyRef: MutableRefObject<string>,
+) {
+  applyingRemoteRef.current = true;
+  persistChannelsLocally(remoteChannels);
+  touchLocalChannelsUpdatedAt(remoteUpdatedAt || Date.now());
+  lastSavedIdsKeyRef.current = channelIdsKey(getChannelIds(remoteChannels));
 }
 
 export function useChannels() {
@@ -140,33 +196,48 @@ export function useChannels() {
         if (!hasSeededRemoteRef.current) {
           hasSeededRemoteRef.current = true;
 
-          if (remoteChannels.length === 0 && localChannels.length > 0) {
-            void pushChannelsToFirebase(localChannels);
+          if (remoteChannels.length === 0) {
+            if (localChannels.length > 0 && remoteUpdatedAt === 0) {
+              void pushChannelsToFirebase(localChannels);
+            } else if (remoteUpdatedAt > 0) {
+              applyRemoteChannels(
+                remoteChannels,
+                remoteUpdatedAt,
+                persistChannelsLocally,
+                applyingRemoteRef,
+                lastSavedIdsKeyRef,
+              );
+            }
+
+            setSyncError(null);
             return;
           }
 
-          const deletedLocally =
-            localIdsKey !== remoteIdsKey &&
-            hasDeletedChannelsLocally(localIds, remoteIds) &&
-            localIds.size <= remoteIds.size;
-
-          const useLocal =
-            deletedLocally ||
-            localUpdatedAt > remoteUpdatedAt ||
-            (localUpdatedAt > 0 && localIdsKey !== remoteIdsKey);
-
-          if (useLocal) {
-            void pushChannelsToFirebase(localChannels);
+          if (localChannels.length === 0) {
+            applyRemoteChannels(
+              remoteChannels,
+              remoteUpdatedAt,
+              persistChannelsLocally,
+              applyingRemoteRef,
+              lastSavedIdsKeyRef,
+            );
+            setSyncError(null);
             return;
           }
 
-          if (localIdsKey !== remoteIdsKey || remoteUpdatedAt > localUpdatedAt) {
-            applyingRemoteRef.current = true;
-            persistChannelsLocally(remoteChannels);
-            touchLocalChannelsUpdatedAt(remoteUpdatedAt || Date.now());
-            lastSavedIdsKeyRef.current = remoteIdsKey;
+          if (shouldPreferLocalOnSeed(localChannels, remoteChannels, localUpdatedAt, remoteUpdatedAt)) {
+            void pushChannelsToFirebase(localChannels);
+            setSyncError(null);
+            return;
           }
 
+          applyRemoteChannels(
+            remoteChannels,
+            remoteUpdatedAt,
+            persistChannelsLocally,
+            applyingRemoteRef,
+            lastSavedIdsKeyRef,
+          );
           setSyncError(null);
           return;
         }
@@ -182,10 +253,13 @@ export function useChannels() {
           return;
         }
 
-        applyingRemoteRef.current = true;
-        persistChannelsLocally(remoteChannels);
-        touchLocalChannelsUpdatedAt(remoteUpdatedAt);
-        lastSavedIdsKeyRef.current = remoteIdsKey;
+        applyRemoteChannels(
+          remoteChannels,
+          remoteUpdatedAt,
+          persistChannelsLocally,
+          applyingRemoteRef,
+          lastSavedIdsKeyRef,
+        );
         setSyncError(null);
       },
       () => {
@@ -211,7 +285,6 @@ export function useChannels() {
       cancelled = true;
       window.clearTimeout(timeoutId);
       unsubscribe();
-      hasSeededRemoteRef.current = false;
     };
   }, [firebaseEnabled, firebaseSyncActive, persistChannelsLocally, pushChannelsToFirebase]);
 

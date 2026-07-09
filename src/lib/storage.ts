@@ -81,6 +81,11 @@ export function normalizeChannels(value: unknown, fallback: Channel[] = defaultC
   return channels.length > 0 ? channels : fallback;
 }
 
+/** Firebase payloads must not fall back to bundled defaults. */
+export function normalizeRemoteChannels(value: unknown): Channel[] {
+  return normalizeChannels(value, []);
+}
+
 export function normalizePostsChannels(
   value: unknown,
   fallback: PostsChannel[] = [],

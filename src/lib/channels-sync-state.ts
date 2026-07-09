@@ -1,5 +1,13 @@
 import { STORAGE_KEYS } from "@/constants/app";
 
+export function hasPersistedLocalChannels(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.localStorage.getItem(STORAGE_KEYS.channels) !== null;
+}
+
 export function getLocalChannelsUpdatedAt(): number {
   if (typeof window === "undefined") {
     return 0;
