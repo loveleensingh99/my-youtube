@@ -34,6 +34,7 @@ export function HomePageClient() {
     setFilter,
     selectedTag,
     selectTag,
+    clearTagFilter,
     clearFeedFilters,
   } = useFeedContext();
 
@@ -53,8 +54,11 @@ export function HomePageClient() {
 
     if (tagParam) {
       selectTag(tagParam);
+      return;
     }
-  }, [channelParam, tagParam, selectTag]);
+
+    clearTagFilter();
+  }, [channelParam, tagParam, selectTag, clearTagFilter]);
 
   const filteredVideos = useMemo(() => {
     if (!settingsHydrated) return [];
