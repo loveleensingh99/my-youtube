@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("FocusTube error:", error, errorInfo);
+    console.error("Lumen error:", error, errorInfo);
   }
 
   handleRetry = () => {
@@ -45,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
           description={
             this.state.errorMessage
               ? `${this.state.errorMessage} Your saved settings may be corrupted. Reset app data if refreshing does not help.`
-              : "FocusTube encountered an error but your data is safe locally. Try refreshing the page."
+              : "Lumen encountered an error but your data is safe locally. Try refreshing the page."
           }
           onRetry={this.handleRetry}
           resetLabel="Reset app data"

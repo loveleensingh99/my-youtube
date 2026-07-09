@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft, RefreshCw } from "lucide-react";
+import { AppLogoMark } from "@/components/AppLogoMark";
 import { APP_NAME } from "@/constants/app";
 import { Button } from "@/components/ui/button";
 import { FeedSourceBadge } from "@/components/FeedSourceBadge";
@@ -43,9 +44,7 @@ export function Header({
             <ArrowLeft className="h-4 w-4" />
           </Button>
         ) : (
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--yt-red)] text-xs font-bold text-white">
-            FT
-          </div>
+          <AppLogoMark className="h-7 w-7 shrink-0" />
         )}
         <div className="flex min-w-0 items-center gap-2">
           <p className="truncate text-base font-semibold tracking-tight">{title ?? APP_NAME}</p>

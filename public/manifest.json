@@ -1,7 +1,7 @@
 {
-  "name": "FocusTube",
-  "short_name": "FocusTube",
-  "description": "A distraction-free YouTube client for intentional viewing.",
+  "name": "Lumen",
+  "short_name": "Lumen",
+  "description": "A calm YouTube client for the channels and posts you choose.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0f0f",
@@ -12,6 +12,12 @@
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

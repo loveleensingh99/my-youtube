@@ -1,6 +1,6 @@
-export const APP_NAME = "FocusTube";
+export const APP_NAME = "Lumen";
 export const APP_DESCRIPTION =
-  "A distraction-free YouTube client for intentional viewing.";
+  "A calm YouTube client for the channels and posts you choose.";
 
 export const STORAGE_KEYS = {
   settings: "focustube:settings",
