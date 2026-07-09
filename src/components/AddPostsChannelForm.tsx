@@ -7,7 +7,9 @@ import { resolvePostsChannelInput } from "@/app/actions/posts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TagInput } from "@/components/TagInput";
 import { usePostsChannels } from "@/hooks/usePostsChannels";
+import { useTagSuggestions } from "@/hooks/useTagSuggestions";
 
 interface AddPostsChannelFormProps {
   onSuccess?: () => void;
@@ -16,6 +18,7 @@ interface AddPostsChannelFormProps {
 
 export function AddPostsChannelForm({ onSuccess, onAdded }: AddPostsChannelFormProps) {
   const { addPostsChannel, hasPostsChannel } = usePostsChannels();
+  const tagSuggestions = useTagSuggestions();
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [tag, setTag] = useState("");
@@ -63,7 +66,7 @@ export function AddPostsChannelForm({ onSuccess, onAdded }: AddPostsChannelFormP
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="grid gap-2">
+        {/* <div className="grid gap-2">
           <Label htmlFor="posts-channel-name">Display name (optional)</Label>
           <Input
             id="posts-channel-name"
@@ -71,14 +74,15 @@ export function AddPostsChannelForm({ onSuccess, onAdded }: AddPostsChannelFormP
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
-        </div>
+        </div> */}
         <div className="grid gap-2">
           <Label htmlFor="posts-channel-tag">Tag (optional)</Label>
-          <Input
+          <TagInput
             id="posts-channel-tag"
             placeholder="Finance, News, Education"
             value={tag}
-            onChange={(event) => setTag(event.target.value)}
+            onChange={setTag}
+            suggestions={tagSuggestions}
           />
         </div>
       </div>

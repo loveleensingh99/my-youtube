@@ -46,13 +46,14 @@ export function ManagedChannelListItem({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="truncate text-sm font-medium">{name}</p>
-          {showTag ? (
+         
+        </div>
+        {showTag ? (
             <Badge variant="outline" className="rounded-full px-2 py-0 text-[10px] font-medium">
               {tag}
             </Badge>
           ) : null}
-        </div>
-        <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+        {/* <p className="truncate text-xs text-muted-foreground">{subtitle}</p> */}
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5">

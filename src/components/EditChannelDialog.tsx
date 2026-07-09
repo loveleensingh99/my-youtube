@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TagInput } from "@/components/TagInput";
+import { useTagSuggestions } from "@/hooks/useTagSuggestions";
 import type { Channel } from "@/types";
 
 interface EditChannelDialogProps {
@@ -21,6 +23,7 @@ interface EditChannelDialogProps {
 }
 
 export function EditChannelDialog({ channel, onSave }: EditChannelDialogProps) {
+  const tagSuggestions = useTagSuggestions();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(channel.name);
   const [tag, setTag] = useState(channel.category);
@@ -72,10 +75,11 @@ export function EditChannelDialog({ channel, onSave }: EditChannelDialogProps) {
           </div>
           <div className="grid gap-2">
             <Label htmlFor={`edit-tag-${channel.id}`}>Tag</Label>
-            <Input
+            <TagInput
               id={`edit-tag-${channel.id}`}
               value={tag}
-              onChange={(event) => setTag(event.target.value)}
+              onChange={setTag}
+              suggestions={tagSuggestions}
               placeholder="Finance, News, Education"
             />
           </div>

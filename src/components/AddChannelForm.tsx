@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TagInput } from "@/components/TagInput";
 import { useFeedContext } from "@/components/FeedProvider";
+import { useTagSuggestions } from "@/hooks/useTagSuggestions";
 
 interface AddChannelFormProps {
   onSuccess?: () => void;
@@ -19,6 +21,7 @@ export function AddChannelForm({ onSuccess }: AddChannelFormProps) {
     channelsSyncError,
     channelsStorageDescription,
   } = useFeedContext();
+  const tagSuggestions = useTagSuggestions();
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [tag, setTag] = useState("");
@@ -70,7 +73,7 @@ export function AddChannelForm({ onSuccess }: AddChannelFormProps) {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid gap-2">
+          {/* <div className="grid gap-2">
             <Label htmlFor="channel-name">Display name (optional)</Label>
             <Input
               id="channel-name"
@@ -78,14 +81,15 @@ export function AddChannelForm({ onSuccess }: AddChannelFormProps) {
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
-          </div>
+          </div> */}
           <div className="grid gap-2">
             <Label htmlFor="channel-tag">Tag (optional)</Label>
-            <Input
+            <TagInput
               id="channel-tag"
               placeholder="Finance, News, Education"
               value={tag}
-              onChange={(event) => setTag(event.target.value)}
+              onChange={setTag}
+              suggestions={tagSuggestions}
             />
           </div>
         </div>
