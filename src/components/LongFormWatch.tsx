@@ -8,6 +8,7 @@ import { useFeedContext } from "@/components/FeedProvider";
 import { UpNextVideoCard } from "@/components/UpNextVideoCard";
 import { WatchPlayer } from "@/components/WatchPlayer";
 import { Button } from "@/components/ui/button";
+import { useDeviceOrientation } from "@/hooks/useDeviceOrientation";
 import type { Video } from "@/types";
 import { formatDuration, formatPublishedDate } from "@/utils/date";
 
@@ -19,11 +20,38 @@ interface LongFormWatchProps {
 export function LongFormWatch({ video, upNext = [] }: LongFormWatchProps) {
   const router = useRouter();
   const { getChannelAvatar } = useFeedContext();
+  const { isLandscape } = useDeviceOrientation();
   const channelHref = video.channelId ? `/channel/${video.channelId}` : null;
   const duration = formatDuration(video.durationSeconds);
 
+  if (isLandscape) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black">
+        <div className="absolute left-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white"
+            onClick={() => router.back()}
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </div>
+        <WatchPlayer
+          videoId={video.id}
+          title={video.title}
+          autoplay
+          fallbackDuration={video.durationSeconds ?? 0}
+          className="h-full w-full"
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-[100dvh] bg-black">
+    <div className="min-h-dvh bg-black">
       <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-white/10 bg-black/95 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md">
         <Button
           type="button"

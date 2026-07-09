@@ -9,6 +9,7 @@ import { useFeedContext } from "@/components/FeedProvider";
 import { WatchLoadMoreSkeleton } from "@/components/Skeleton";
 import { WatchPlayer } from "@/components/WatchPlayer";
 import { Button } from "@/components/ui/button";
+import { useDeviceOrientation } from "@/hooks/useDeviceOrientation";
 import { useVerticalSwipe } from "@/hooks/useVerticalSwipe";
 import { cn } from "@/lib/utils";
 import type { Video } from "@/types";
@@ -31,6 +32,7 @@ export function MobileWatchFeed({
 }: MobileWatchFeedProps) {
   const router = useRouter();
   const { getChannelAvatar } = useFeedContext();
+  const { isLandscape } = useDeviceOrientation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeVideoId, setActiveVideoId] = useState(initialVideoId);
   const loadMoreLockRef = useRef(false);
@@ -177,15 +179,17 @@ export function MobileWatchFeed({
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="rounded-full bg-black/40 px-3 py-1 text-xs text-white/90">
-          {activeIndex + 1} / {videos.length}
-          {hasMore ? "+" : ""}
-        </div>
+        {!isLandscape ? (
+          <div className="rounded-full bg-black/40 px-3 py-1 text-xs text-white/90">
+            {activeIndex + 1} / {videos.length}
+            {hasMore ? "+" : ""}
+          </div>
+        ) : null}
       </div>
 
       <div
         ref={containerRef}
-        className="h-[100dvh] snap-y snap-mandatory overflow-y-auto overscroll-y-contain touch-pan-y [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="h-dvh snap-y snap-mandatory overflow-y-auto overscroll-y-contain touch-pan-y [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {videos.map((video, index) => {
           const isActive = video.id === activeVideoId;
@@ -194,9 +198,12 @@ export function MobileWatchFeed({
             <section
               key={video.id}
               data-video-id={video.id}
-              className="flex h-[100dvh] snap-start snap-always flex-col bg-black"
+              className={cn(
+                "flex h-dvh snap-start snap-always flex-col bg-black",
+                isLandscape && "relative",
+              )}
             >
-              <div className="relative min-h-0 flex-1">
+              <div className={cn("relative min-h-0 flex-1", isLandscape && "h-dvh")}>
                 {isActive ? (
                   <>
                     <WatchPlayer
@@ -231,25 +238,27 @@ export function MobileWatchFeed({
                 )}
               </div>
 
-              <div className="shrink-0 bg-black px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2">
-                <div className="flex items-start gap-3">
-                  <ChannelAvatar
-                    channelName={video.channelName}
-                    avatarUrl={video.channelId ? getChannelAvatar(video.channelId) : undefined}
-                    size="md"
-                    className="bg-zinc-700 text-white"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <h1 className="line-clamp-2 text-sm font-semibold text-white">{video.title}</h1>
-                    <p className="mt-1 text-xs text-white/70">
-                      {video.channelName} · {formatPublishedDate(video.publishedAt)}
-                    </p>
-                    <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-white/45">
-                      Swipe up or down
-                    </p>
+              {!isLandscape ? (
+                <div className="shrink-0 bg-black px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2">
+                  <div className="flex items-start gap-3">
+                    <ChannelAvatar
+                      channelName={video.channelName}
+                      avatarUrl={video.channelId ? getChannelAvatar(video.channelId) : undefined}
+                      size="md"
+                      className="bg-zinc-700 text-white"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h1 className="line-clamp-2 text-sm font-semibold text-white">{video.title}</h1>
+                      <p className="mt-1 text-xs text-white/70">
+                        {video.channelName} · {formatPublishedDate(video.publishedAt)}
+                      </p>
+                      <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-white/45">
+                        Swipe up or down
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
             </section>
           );
         })}
