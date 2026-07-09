@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFirebaseAuthContext } from "@/components/FirebaseAuthProvider";
 import { STORAGE_KEYS } from "@/constants/app";
+import { postsChannelsContentKey } from "@/lib/channels-sync-state";
 import {
   saveRemotePostsChannels,
   subscribeRemotePostsChannels,
@@ -11,13 +12,6 @@ import { isFirebaseConfigured } from "@/lib/firebase/config";
 import { normalizePostsChannels } from "@/lib/storage";
 import type { PostsChannel } from "@/types";
 import { useLocalStorage } from "./useLocalStorage";
-
-function postsIdsKey(channels: PostsChannel[]): string {
-  return channels
-    .map((channel) => channel.id)
-    .sort()
-    .join("|");
-}
 
 function getLocalPostsUpdatedAt(): number {
   if (typeof window === "undefined") {
@@ -79,7 +73,7 @@ export function usePostsChannels() {
         return;
       }
 
-      const nextKey = postsIdsKey(next);
+      const nextKey = postsChannelsContentKey(next);
       if (nextKey === lastSavedKeyRef.current) {
         return;
       }
@@ -105,8 +99,8 @@ export function usePostsChannels() {
       user.uid,
       ({ postsChannels: remotePostsChannels, postsChannelsUpdatedAt }) => {
         const localPostsChannels = postsChannelsRef.current;
-        const localKey = postsIdsKey(localPostsChannels);
-        const remoteKey = postsIdsKey(remotePostsChannels);
+        const localKey = postsChannelsContentKey(localPostsChannels);
+        const remoteKey = postsChannelsContentKey(remotePostsChannels);
         const localUpdatedAt = getLocalPostsUpdatedAt();
 
         if (!hasSeededRemoteRef.current) {

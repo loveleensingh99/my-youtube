@@ -6,6 +6,7 @@ import { useFirebaseAuthContext } from "@/components/FirebaseAuthProvider";
 import { defaultChannels } from "@/data/channels";
 import {
   channelIdsKey,
+  channelsContentKey,
   getLocalChannelsUpdatedAt,
   hasDeletedChannelsLocally,
   hasPersistedLocalChannels,
@@ -74,7 +75,7 @@ function applyRemoteChannels(
   applyingRemoteRef.current = true;
   persistChannelsLocally(remoteChannels);
   touchLocalChannelsUpdatedAt(remoteUpdatedAt || Date.now());
-  lastSavedIdsKeyRef.current = channelIdsKey(getChannelIds(remoteChannels));
+  lastSavedIdsKeyRef.current = channelsContentKey(remoteChannels);
 }
 
 export function useChannels() {
@@ -105,8 +106,8 @@ export function useChannels() {
       return;
     }
 
-    const nextIdsKey = channelIdsKey(getChannelIds(next));
-    if (nextIdsKey === lastSavedIdsKeyRef.current) {
+    const nextContentKey = channelsContentKey(next);
+    if (nextContentKey === lastSavedIdsKeyRef.current) {
       return;
     }
 
@@ -117,7 +118,7 @@ export function useChannels() {
       return;
     }
 
-    lastSavedIdsKeyRef.current = nextIdsKey;
+    lastSavedIdsKeyRef.current = nextContentKey;
     touchLocalChannelsUpdatedAt(result.updatedAt);
     setSyncError(null);
   }, [user]);
@@ -207,10 +208,8 @@ export function useChannels() {
         window.clearTimeout(timeoutId);
         const localChannels = channelsRef.current;
         const localUpdatedAt = getLocalChannelsUpdatedAt();
-        const localIds = new Set(getChannelIds(localChannels));
-        const remoteIds = new Set(getChannelIds(remoteChannels));
-        const localIdsKey = channelIdsKey([...localIds]);
-        const remoteIdsKey = channelIdsKey([...remoteIds]);
+        const localContentKey = channelsContentKey(localChannels);
+        const remoteContentKey = channelsContentKey(remoteChannels);
 
         if (!hasSeededRemoteRef.current) {
           hasSeededRemoteRef.current = true;
@@ -261,8 +260,8 @@ export function useChannels() {
           return;
         }
 
-        if (remoteIdsKey === localIdsKey) {
-          lastSavedIdsKeyRef.current = remoteIdsKey;
+        if (localContentKey === remoteContentKey) {
+          lastSavedIdsKeyRef.current = remoteContentKey;
           setSyncError(null);
           return;
         }
@@ -317,8 +316,8 @@ export function useChannels() {
       return;
     }
 
-    const nextIdsKey = channelIdsKey(getChannelIds(channels));
-    if (nextIdsKey === lastSavedIdsKeyRef.current) {
+    const nextContentKey = channelsContentKey(channels);
+    if (nextContentKey === lastSavedIdsKeyRef.current) {
       return;
     }
 
