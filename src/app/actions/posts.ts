@@ -40,6 +40,7 @@ function buildCandidateUrl(input: string): { url: string } | { error: string } {
 export async function resolvePostsChannelInput(
   input: string,
   preferredName?: string,
+  preferredTag?: string,
 ): Promise<{ channel: PostsChannel } | { error: string }> {
   const candidate = buildCandidateUrl(input);
   if ("error" in candidate) {
@@ -66,6 +67,7 @@ export async function resolvePostsChannelInput(
     channel: {
       ...info,
       name: preferredName?.trim() || info.name,
+      category: preferredTag?.trim() || "General",
     },
   };
 }

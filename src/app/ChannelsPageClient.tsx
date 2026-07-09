@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { ChannelCard } from "@/components/ChannelCard";
-import { ChannelManager } from "@/components/ChannelManager";
 import { ChannelCardSkeleton, ChannelsPageSkeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
@@ -53,8 +52,10 @@ export function ChannelsPageClient() {
       <main className="space-y-6 px-4 py-4">
         {channels.length === 0 ? (
           <EmptyState
-            title="No channels yet"
-            description="Add a YouTube channel below to start building your feed."
+            title="No subscriptions yet"
+            description="Add YouTube channels from your Profile to start building your feed."
+            actionLabel="Go to Profile"
+            onAction={() => router.push("/settings")}
           />
         ) : isLoading ? (
           <div className="space-y-3">
@@ -75,8 +76,6 @@ export function ChannelsPageClient() {
             ))}
           </div>
         )}
-
-        <ChannelManager />
       </main>
     </div>
   );

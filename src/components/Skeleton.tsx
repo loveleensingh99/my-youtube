@@ -112,9 +112,6 @@ export function PostsPageSkeleton() {
             <PostCardSkeleton key={index} />
           ))}
         </div>
-        <div className="px-4 pb-4">
-          <ChannelManagerSkeleton />
-        </div>
       </main>
     </>
   );
@@ -180,22 +177,26 @@ export function HomePageSkeleton({ shortsOnly = false }: { shortsOnly?: boolean 
 
 export function ChannelManagerSkeleton() {
   return (
-    <div className="animate-pulse rounded-xl border border-border">
-      <div className="flex items-center justify-between gap-3 border-b border-border/60 px-6 py-5">
-        <div className="h-6 w-32 rounded bg-secondary" />
-        <div className="h-9 w-28 rounded-md bg-secondary" />
+    <div className="animate-pulse overflow-hidden rounded-xl border border-border/60">
+      <div className="flex items-start justify-between gap-3 border-b border-border/40 bg-muted/10 px-4 py-4">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-xl bg-secondary" />
+          <div className="space-y-2">
+            <div className="h-4 w-28 rounded bg-secondary" />
+            <div className="h-3 w-44 rounded bg-secondary" />
+          </div>
+        </div>
+        <div className="h-8 w-16 rounded-md bg-secondary" />
       </div>
-      <div className="space-y-2 p-6">
+      <div className="divide-y divide-border/50">
         {Array.from({ length: 3 }).map((_, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between gap-3 rounded-xl border border-border/60 px-4 py-3"
-          >
+          <div key={index} className="flex items-center gap-3 px-4 py-3.5">
+            <div className="h-9 w-9 rounded-xl bg-secondary" />
             <div className="flex-1 space-y-2">
               <div className="h-4 w-32 rounded bg-secondary" />
-              <div className="h-3 w-48 rounded bg-secondary" />
+              <div className="h-3 w-40 rounded bg-secondary" />
             </div>
-            <div className="h-8 w-8 rounded bg-secondary" />
+            <div className="h-8 w-16 rounded bg-secondary" />
           </div>
         ))}
       </div>
@@ -213,7 +214,6 @@ export function ChannelsPageSkeleton() {
             <ChannelCardSkeleton key={index} />
           ))}
         </div>
-        <ChannelManagerSkeleton />
       </main>
     </>
   );
@@ -277,6 +277,9 @@ export function SettingsPageSkeleton() {
     <>
       <HeaderSkeleton />
       <main className="space-y-6 px-4 py-4">
+        <div className="h-24 animate-pulse rounded-2xl bg-secondary" />
+        <ChannelManagerSkeleton />
+        <ChannelManagerSkeleton />
         <SettingsCardSkeleton />
         <SettingsCardSkeleton />
         <SettingsCardSkeleton />

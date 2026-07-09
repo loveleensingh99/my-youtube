@@ -18,13 +18,14 @@ export function AddPostsChannelForm({ onSuccess, onAdded }: AddPostsChannelFormP
   const { addPostsChannel, hasPostsChannel } = usePostsChannels();
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
+  const [tag, setTag] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsSubmitting(true);
 
-    const result = await resolvePostsChannelInput(input, name);
+    const result = await resolvePostsChannelInput(input, name, tag);
 
     if ("error" in result) {
       toast.error(result.error);
@@ -42,6 +43,7 @@ export function AddPostsChannelForm({ onSuccess, onAdded }: AddPostsChannelFormP
     toast.success("Posts channel added");
     setInput("");
     setName("");
+    setTag("");
     setIsSubmitting(false);
     onAdded?.();
     onSuccess?.();
@@ -60,14 +62,25 @@ export function AddPostsChannelForm({ onSuccess, onAdded }: AddPostsChannelFormP
         />
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor="posts-channel-name">Display name (optional)</Label>
-        <Input
-          id="posts-channel-name"
-          placeholder="Auto-detected from YouTube"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-        />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-2">
+          <Label htmlFor="posts-channel-name">Display name (optional)</Label>
+          <Input
+            id="posts-channel-name"
+            placeholder="Auto-detected from YouTube"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="posts-channel-tag">Tag (optional)</Label>
+          <Input
+            id="posts-channel-tag"
+            placeholder="Finance, News, Education"
+            value={tag}
+            onChange={(event) => setTag(event.target.value)}
+          />
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground">

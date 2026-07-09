@@ -34,13 +34,14 @@ export function usePostsChannels() {
   );
 
   const updatePostsChannel = useCallback(
-    (channelId: string, updates: Pick<PostsChannel, "name">) => {
+    (channelId: string, updates: Pick<PostsChannel, "name" | "category">) => {
       setValue((prev) =>
         prev.map((channel) =>
           channel.id === channelId
             ? {
                 ...channel,
                 name: updates.name.trim() || channel.name,
+                category: updates.category.trim() || "General",
               }
             : channel,
         ),

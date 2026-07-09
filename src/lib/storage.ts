@@ -101,6 +101,10 @@ export function normalizePostsChannels(
     .map((item) => ({
       id: item.id,
       name: item.name.trim() || "YouTube Channel",
+      category:
+        typeof item.category === "string" && item.category.trim()
+          ? item.category.trim()
+          : "General",
       handle:
         typeof item.handle === "string" && item.handle.trim() ? item.handle.trim() : undefined,
       avatarUrl:

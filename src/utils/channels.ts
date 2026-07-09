@@ -2,7 +2,7 @@ import type { Channel } from "@/types";
 
 const HIDDEN_TAGS = new Set(["general"]);
 
-export function getChannelTags(channels: Channel[]): string[] {
+export function getChannelTags(channels: Array<Pick<Channel, "category">>): string[] {
   const tags = new Set<string>();
 
   for (const channel of channels) {

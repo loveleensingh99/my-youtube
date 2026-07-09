@@ -16,6 +16,8 @@ interface AddChannelModalProps {
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
   triggerLabel?: string;
+  triggerVariant?: "default" | "outline" | "ghost";
+  triggerSize?: "default" | "sm";
 }
 
 export function AddChannelModal({
@@ -23,12 +25,14 @@ export function AddChannelModal({
   onOpenChange,
   showTrigger = true,
   triggerLabel = "Add channel",
+  triggerVariant = "default",
+  triggerSize = "default",
 }: AddChannelModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {showTrigger ? (
         <DialogTrigger asChild>
-          <Button type="button">
+          <Button type="button" variant={triggerVariant} size={triggerSize}>
             <Plus className="h-4 w-4" />
             {triggerLabel}
           </Button>

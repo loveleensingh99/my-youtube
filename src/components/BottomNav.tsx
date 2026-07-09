@@ -9,7 +9,7 @@ const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/posts", label: "Posts", icon: MessageSquareText },
   { href: "/channels", label: "Subs", icon: ListVideo },
-  { href: "/settings", label: "You", icon: UserRound },
+  { href: "/settings", label: "Profile", icon: UserRound },
 ];
 
 export function BottomNav() {

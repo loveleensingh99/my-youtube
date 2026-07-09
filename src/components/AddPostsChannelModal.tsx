@@ -16,6 +16,8 @@ interface AddPostsChannelModalProps {
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
   triggerLabel?: string;
+  triggerVariant?: "default" | "outline" | "ghost";
+  triggerSize?: "default" | "sm";
   onAdded?: () => void;
 }
 
@@ -24,13 +26,15 @@ export function AddPostsChannelModal({
   onOpenChange,
   showTrigger = true,
   triggerLabel = "Add channel",
+  triggerVariant = "default",
+  triggerSize = "default",
   onAdded,
 }: AddPostsChannelModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {showTrigger ? (
         <DialogTrigger asChild>
-          <Button type="button">
+          <Button type="button" variant={triggerVariant} size={triggerSize}>
             <Plus className="h-4 w-4" />
             {triggerLabel}
           </Button>

@@ -1,6 +1,7 @@
 export interface PostsChannel {
   id: string;
   name: string;
+  category: string;
   handle?: string;
   avatarUrl?: string;
 }
