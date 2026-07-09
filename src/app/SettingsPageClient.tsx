@@ -1,6 +1,7 @@
 "use client";
 
 import { ChannelManager } from "@/components/ChannelManager";
+import { FirebaseAuthCard } from "@/components/FirebaseAuthCard";
 import { FirebaseChannelSync } from "@/components/FirebaseChannelSync";
 import { Header } from "@/components/Header";
 import { PostsChannelManager } from "@/components/PostsChannelManager";
@@ -23,6 +24,7 @@ export function SettingsPageClient() {
 
       <main className="space-y-6 px-4 py-4">
         <ProfilePageHeader />
+        <FirebaseAuthCard />
         <ChannelManager />
         <PostsChannelManager />
         <FirebaseChannelSync />

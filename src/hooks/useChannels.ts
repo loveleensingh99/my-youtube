@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { enrichChannelAvatars } from "@/app/actions/channels";
+import { useFirebaseAuthContext } from "@/components/FirebaseAuthProvider";
 import { defaultChannels } from "@/data/channels";
 import {
   channelIdsKey,
@@ -77,14 +78,15 @@ function applyRemoteChannels(
 }
 
 export function useChannels() {
+  const { configured: firebaseConfigured, user, loading: authLoading } = useFirebaseAuthContext();
   const { value: channels, setValue } = useLocalStorage<Channel[]>(
     STORAGE_KEYS.channels,
     defaultChannels,
     normalizeChannels,
   );
-  const firebaseEnabled = isFirebaseConfigured();
+  const firebaseEnabled = isFirebaseConfigured() && firebaseConfigured && Boolean(user);
   const [syncError, setSyncError] = useState<string | null>(null);
-  const [firebaseSyncActive, setFirebaseSyncActive] = useState(firebaseEnabled);
+  const [firebaseSyncActive, setFirebaseSyncActive] = useState(firebaseEnabled && !authLoading);
   const channelsRef = useRef(channels);
   const applyingRemoteRef = useRef(false);
   const hasSeededRemoteRef = useRef(false);
@@ -99,12 +101,16 @@ export function useChannels() {
   );
 
   const pushChannelsToFirebase = useCallback(async (next: Channel[]) => {
+    if (!user) {
+      return;
+    }
+
     const nextIdsKey = channelIdsKey(getChannelIds(next));
     if (nextIdsKey === lastSavedIdsKeyRef.current) {
       return;
     }
 
-    const result = await saveRemoteChannels(next);
+    const result = await saveRemoteChannels(user.uid, next);
     if (!result.ok) {
       setSyncError(result.error);
       setFirebaseSyncActive(false);
@@ -114,7 +120,7 @@ export function useChannels() {
     lastSavedIdsKeyRef.current = nextIdsKey;
     touchLocalChannelsUpdatedAt(result.updatedAt);
     setSyncError(null);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     channelsRef.current = channels;
@@ -165,7 +171,19 @@ export function useChannels() {
   ]);
 
   useEffect(() => {
+    setFirebaseSyncActive(firebaseEnabled && !authLoading);
+    if (!firebaseEnabled) {
+      hasSeededRemoteRef.current = false;
+      lastSavedIdsKeyRef.current = "";
+    }
+  }, [firebaseEnabled, authLoading]);
+
+  useEffect(() => {
     if (!firebaseEnabled || !firebaseSyncActive) {
+      return;
+    }
+
+    if (!user) {
       return;
     }
 
@@ -180,6 +198,7 @@ export function useChannels() {
     }, 5000);
 
     const unsubscribe = subscribeRemoteChannels(
+      user.uid,
       ({ channels: remoteChannels, updatedAt: remoteUpdatedAt }) => {
         if (cancelled) {
           return;
@@ -286,7 +305,7 @@ export function useChannels() {
       window.clearTimeout(timeoutId);
       unsubscribe();
     };
-  }, [firebaseEnabled, firebaseSyncActive, persistChannelsLocally, pushChannelsToFirebase]);
+  }, [firebaseEnabled, firebaseSyncActive, persistChannelsLocally, pushChannelsToFirebase, user]);
 
   useEffect(() => {
     if (!firebaseEnabled || !firebaseSyncActive || !hasSeededRemoteRef.current) {
@@ -311,16 +330,20 @@ export function useChannels() {
   }, [channels, firebaseEnabled, firebaseSyncActive, pushChannelsToFirebase]);
 
   const storageDescription = useMemo(() => {
-    if (!firebaseEnabled) {
-      return "Channels are saved in this browser. Add Firebase settings to sync across your devices.";
+    if (!firebaseConfigured) {
+      return "Channels are saved in this browser. Add Firebase settings to enable cloud sync.";
+    }
+
+    if (!user) {
+      return "Sign in to sync your channels across devices. Until then, data stays on this device.";
     }
 
     if (!firebaseSyncActive) {
-      return "Using local storage. Fix Firebase setup in Settings to sync across devices.";
+      return "Using local storage. Check Firebase setup or internet connection.";
     }
 
     return "Your personal channel list syncs automatically with Firebase on all your devices.";
-  }, [firebaseEnabled, firebaseSyncActive]);
+  }, [firebaseConfigured, firebaseSyncActive, user]);
 
   const addChannel = useCallback(
     (channel: Channel) => {
@@ -386,7 +409,7 @@ export function useChannels() {
     isHydrated: true,
     syncError,
     storageDescription,
-    firebaseConfigured: firebaseEnabled,
+    firebaseConfigured,
     firebaseSyncActive,
   };
 }

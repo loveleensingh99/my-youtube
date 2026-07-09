@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   channelsSectionExpanded: "focustube:channels-section-expanded",
   channelsUpdatedAt: "focustube:channels-updated-at",
   postsChannels: "focustube:posts-channels",
+  postsChannelsUpdatedAt: "focustube:posts-channels-updated-at",
 } as const;
 
 export const RSS_BASE_URL =

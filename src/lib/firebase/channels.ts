@@ -3,28 +3,27 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  updateDoc,
   type Unsubscribe,
 } from "firebase/firestore";
 import { normalizeRemoteChannels } from "@/lib/storage";
 import type { Channel } from "@/types";
 import { getFirebaseDb } from "@/lib/firebase/client";
-import { getFirebaseSyncKey } from "@/lib/firebase/config";
 
-const PERSONAL_COLLECTION = "personal";
+const USERS_COLLECTION = "users";
 
 export interface RemoteChannelsSnapshot {
   channels: Channel[];
   updatedAt: number;
 }
 
-function personalDocRef() {
-  const syncKey = getFirebaseSyncKey();
+function userDocRef(userId: string) {
   const db = getFirebaseDb();
-  if (!db || !syncKey) {
+  if (!db || !userId) {
     return null;
   }
 
-  return doc(db, PERSONAL_COLLECTION, syncKey);
+  return doc(db, USERS_COLLECTION, userId);
 }
 
 function getRemoteUpdatedAt(value: unknown): number {
@@ -47,10 +46,11 @@ export function mergeChannels(existing: Channel[], incoming: Channel[]): Channel
 }
 
 export function subscribeRemoteChannels(
+  userId: string,
   onChange: (snapshot: RemoteChannelsSnapshot) => void,
   onError?: (error: Error) => void,
 ): Unsubscribe | null {
-  const ref = personalDocRef();
+  const ref = userDocRef(userId);
   if (!ref) {
     return null;
   }
@@ -76,26 +76,56 @@ export function subscribeRemoteChannels(
 }
 
 export async function saveRemoteChannels(
+  userId: string,
   channels: Channel[],
 ): Promise<{ ok: true; updatedAt: number } | { ok: false; error: string }> {
-  const ref = personalDocRef();
+  const ref = userDocRef(userId);
   if (!ref) {
     return { ok: false, error: "Firebase is not configured." };
   }
 
   try {
-    await setDoc(ref, {
-      channels: channels.map((channel) => ({
-        id: channel.id,
-        name: channel.name,
-        category: channel.category,
-        ...(channel.avatarUrl ? { avatarUrl: channel.avatarUrl } : {}),
-      })),
-      updatedAt: serverTimestamp(),
-    });
+    await setDoc(
+      ref,
+      {
+        channels: channels.map((channel) => ({
+          id: channel.id,
+          name: channel.name,
+          category: channel.category,
+          ...(channel.avatarUrl ? { avatarUrl: channel.avatarUrl } : {}),
+        })),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
 
     return { ok: true, updatedAt: Date.now() };
   } catch {
     return { ok: false, error: "Could not save channels to Firebase." };
+  }
+}
+
+export async function touchRemoteChannelsUpdatedAt(
+  userId: string,
+): Promise<{ ok: true; updatedAt: number } | { ok: false; error: string }> {
+  const ref = userDocRef(userId);
+  if (!ref) {
+    return { ok: false, error: "Firebase is not configured." };
+  }
+
+  try {
+    await updateDoc(ref, {
+      updatedAt: serverTimestamp(),
+    });
+    return { ok: true, updatedAt: Date.now() };
+  } catch {
+    await setDoc(
+      ref,
+      {
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+    return { ok: true, updatedAt: Date.now() };
   }
 }

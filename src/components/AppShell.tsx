@@ -2,6 +2,7 @@
 
 import { AppProviders } from "@/components/AppProviders";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { FirebaseAuthProvider } from "@/components/FirebaseAuthProvider";
 import { FeedProvider, useFeedContext } from "@/components/FeedProvider";
 
 function AppShellInner({ children }: { children: React.ReactNode }) {
@@ -12,9 +13,11 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
-      <FeedProvider>
-        <AppShellInner>{children}</AppShellInner>
-      </FeedProvider>
+      <FirebaseAuthProvider>
+        <FeedProvider>
+          <AppShellInner>{children}</AppShellInner>
+        </FeedProvider>
+      </FirebaseAuthProvider>
     </ErrorBoundary>
   );
 }

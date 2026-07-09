@@ -2,9 +2,14 @@
 
 import { Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFirebaseAuthContext } from "@/components/FirebaseAuthProvider";
 import { useFeedContext } from "@/components/FeedProvider";
+import { usePostsChannels } from "@/hooks/usePostsChannels";
 
 export function FirebaseChannelSync() {
+  const { user } = useFirebaseAuthContext();
+  const { firebaseSyncActive: postsSyncActive, channelsStorageDescription: postsStorageDescription } =
+    usePostsChannels();
   const { firebaseConfigured, firebaseSyncActive, channelsSyncError, channelsStorageDescription } =
     useFeedContext();
 
@@ -24,7 +29,6 @@ export function FirebaseChannelSync() {
             <li>NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN</li>
             <li>NEXT_PUBLIC_FIREBASE_PROJECT_ID</li>
             <li>NEXT_PUBLIC_FIREBASE_APP_ID</li>
-            <li>NEXT_PUBLIC_FIREBASE_SYNC_KEY</li>
           </ul>
         </CardContent>
       </Card>
@@ -35,7 +39,11 @@ export function FirebaseChannelSync() {
     <Card>
       <CardHeader>
         <CardTitle>Cloud sync</CardTitle>
-        <CardDescription>{channelsStorageDescription}</CardDescription>
+        <CardDescription>
+          {user
+            ? "Your lists are tied to your signed-in account."
+            : "Sign in above to enable account-based sync."}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {channelsSyncError ? (
@@ -45,14 +53,19 @@ export function FirebaseChannelSync() {
         ) : firebaseSyncActive ? (
           <div className="flex items-center gap-2 text-sm text-emerald-300">
             <Check className="h-4 w-4" />
-            <span>Firebase sync is active for your personal list.</span>
+            <span>Subscriptions sync is active.</span>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Channels are saved locally on this device. Set up Firestore in the Firebase console to
-            enable cloud sync.
-          </p>
+          <p className="text-sm text-muted-foreground">{channelsStorageDescription}</p>
         )}
+        <p className="text-xs text-muted-foreground">
+          Posts channels:{" "}
+          {postsSyncActive ? (
+            <span className="text-emerald-300">Sync active</span>
+          ) : (
+            postsStorageDescription
+          )}
+        </p>
       </CardContent>
     </Card>
   );

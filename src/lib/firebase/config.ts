@@ -30,10 +30,5 @@ export function getFirebaseConfig(): FirebasePublicConfig | null {
 }
 
 export function isFirebaseConfigured(): boolean {
-  return getFirebaseConfig() !== null && Boolean(getFirebaseSyncKey());
-}
-
-export function getFirebaseSyncKey(): string | null {
-  const syncKey = process.env.NEXT_PUBLIC_FIREBASE_SYNC_KEY?.trim();
-  return syncKey || null;
+  return getFirebaseConfig() !== null;
 }
