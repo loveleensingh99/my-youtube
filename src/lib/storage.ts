@@ -1,4 +1,4 @@
-import type { Channel, FeedFilter, Settings, ThumbnailSize } from "@/types";
+import type { Channel, FeedFilter, PostsChannel, Settings, ThumbnailSize } from "@/types";
 import { defaultChannels } from "@/data/channels";
 import { defaultSettings } from "@/lib/defaults";
 
@@ -79,6 +79,37 @@ export function normalizeChannels(value: unknown, fallback: Channel[] = defaultC
     }));
 
   return channels.length > 0 ? channels : fallback;
+}
+
+export function normalizePostsChannels(
+  value: unknown,
+  fallback: PostsChannel[] = [],
+): PostsChannel[] {
+  if (!Array.isArray(value)) {
+    return fallback;
+  }
+
+  const channels = value
+    .filter(
+      (item): item is PostsChannel =>
+        Boolean(item) &&
+        typeof item === "object" &&
+        typeof (item as PostsChannel).id === "string" &&
+        (item as PostsChannel).id.startsWith("UC") &&
+        typeof (item as PostsChannel).name === "string",
+    )
+    .map((item) => ({
+      id: item.id,
+      name: item.name.trim() || "YouTube Channel",
+      handle:
+        typeof item.handle === "string" && item.handle.trim() ? item.handle.trim() : undefined,
+      avatarUrl:
+        typeof item.avatarUrl === "string" && item.avatarUrl.trim()
+          ? item.avatarUrl.trim()
+          : undefined,
+    }));
+
+  return channels;
 }
 
 export function clearFocusTubeStorage() {

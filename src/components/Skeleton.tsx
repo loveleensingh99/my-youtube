@@ -85,6 +85,41 @@ export function ChannelCardSkeleton() {
   );
 }
 
+export function PostCardSkeleton() {
+  return (
+    <div className="animate-pulse px-4 py-4">
+      <div className="flex gap-3">
+        <div className="h-9 w-9 shrink-0 rounded-full bg-secondary" />
+        <div className="flex-1 space-y-3">
+          <div className="h-4 w-32 rounded bg-secondary" />
+          <div className="h-3 w-20 rounded bg-secondary" />
+          <div className="h-4 w-full rounded bg-secondary" />
+          <div className="h-4 w-5/6 rounded bg-secondary" />
+          <div className="aspect-video rounded-xl bg-secondary" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PostsPageSkeleton() {
+  return (
+    <>
+      <HeaderSkeleton />
+      <main className="space-y-6">
+        <div className="divide-y divide-border">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <PostCardSkeleton key={index} />
+          ))}
+        </div>
+        <div className="px-4 pb-4">
+          <ChannelManagerSkeleton />
+        </div>
+      </main>
+    </>
+  );
+}
+
 export function HeaderSkeleton({ withBack = false }: { withBack?: boolean }) {
   return (
     <div className="sticky top-0 z-20 flex animate-pulse items-center justify-between border-b border-border bg-background px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
