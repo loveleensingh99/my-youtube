@@ -31,10 +31,8 @@ export function ChannelCard({ channel, onSelect }: ChannelCardProps) {
             <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </div>
           <Badge variant="outline">{channel.category}</Badge>
-          <p className="line-clamp-2 text-sm text-muted-foreground">
-            {channel.latestTitle ?? "No uploads yet"}
-          </p>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          
+          {/* <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Radio className="h-3 w-3" />
               {channel.videoCount} videos fetched
@@ -42,7 +40,7 @@ export function ChannelCard({ channel, onSelect }: ChannelCardProps) {
             {channel.latestUpload ? (
               <span>Latest {formatPublishedDate(channel.latestUpload)}</span>
             ) : null}
-          </div>
+          </div> */}
         </div>
       </div>
     </Card>
