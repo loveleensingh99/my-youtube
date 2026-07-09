@@ -290,3 +290,49 @@ export function WatchPlayerSkeleton() {
     </div>
   );
 }
+
+export function FacebookPostCardSkeleton() {
+  return (
+    <div className="animate-pulse border-b border-border">
+      <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+        <div className="space-y-2">
+          <div className="h-4 w-28 rounded bg-secondary" />
+          <div className="h-3 w-20 rounded bg-secondary" />
+        </div>
+        <div className="h-8 w-16 rounded bg-secondary" />
+      </div>
+      <div className="aspect-[4/3] bg-secondary" />
+      <div className="space-y-2 px-3 py-3">
+        <div className="h-3 w-full rounded bg-secondary" />
+        <div className="h-3 w-5/6 rounded bg-secondary" />
+        <div className="h-3 w-2/3 rounded bg-secondary" />
+      </div>
+    </div>
+  );
+}
+
+export function FacebookFeedSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <div>
+      {Array.from({ length: count }).map((_, index) => (
+        <FacebookPostCardSkeleton key={index} />
+      ))}
+    </div>
+  );
+}
+
+export function FacebookLoadMoreSkeleton() {
+  return <FacebookPostCardSkeleton />;
+}
+
+export function FacebookPageSkeleton() {
+  return (
+    <div className="flex min-h-[100dvh] flex-col">
+      <div className="sticky top-0 z-30 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md">
+        <div className="h-6 w-32 animate-pulse rounded bg-secondary" />
+        <div className="mt-2 h-3 w-48 animate-pulse rounded bg-secondary" />
+      </div>
+      <FacebookFeedSkeleton />
+    </div>
+  );
+}

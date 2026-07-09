@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ListVideo, UserRound } from "lucide-react";
+import { Home, ListVideo, Newspaper, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/channels", label: "Subs", icon: ListVideo },
+  { href: "/facebook", label: "Facebook", icon: Newspaper },
   { href: "/settings", label: "You", icon: UserRound },
 ];
 
@@ -30,7 +31,7 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors",
+                "flex flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium transition-colors",
                 active ? "text-foreground" : "text-muted-foreground",
               )}
               aria-current={active ? "page" : undefined}

@@ -6,5 +6,11 @@ service cloud.firestore {
     match /personal/{syncKey} {
       allow read, write: if syncKey == "focustube-my-7ef9a-personal";
     }
+
+    // Facebook posts — read-only from the client; writes use Firebase Admin SDK (scraper)
+    match /facebook_posts/{postId} {
+      allow read: if true;
+      allow write: if false;
+    }
   }
 }

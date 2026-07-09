@@ -31,3 +31,5 @@ export const FEED_PAGE_SIZE = 12;
 export const API_VIDEOS_PER_PAGE = 15;
 export const RSS_MAX_VIDEOS_PER_CHANNEL = 15;
 export const DEFAULT_REFRESH_INTERVAL_MINUTES = 15;
+export const FACEBOOK_POSTS_PAGE_SIZE = 20;
+export const FACEBOOK_POSTS_COLLECTION = "facebook_posts";

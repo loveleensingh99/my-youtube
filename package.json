@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "scrape:facebook": "tsx scripts/facebook-scraper/index.ts",
+    "facebook:login": "tsx scripts/facebook-scraper/save-login.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -22,9 +24,11 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "firebase": "^12.15.0",
+    "firebase-admin": "^13.4.0",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.23.0",
     "next": "16.2.10",
+    "playwright": "^1.52.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.81.0",
@@ -40,6 +44,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "tsx": "^4.20.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -1,0 +1,17 @@
+[
+  {
+    "pageId": "BBCNews",
+    "pageName": "BBC News",
+    "url": "https://www.facebook.com/BBCNews"
+  },
+  {
+    "pageId": "cnn",
+    "pageName": "CNN",
+    "url": "https://www.facebook.com/cnn"
+  },
+  {
+    "pageId": "tricityupdates",
+    "pageName": "Tricity Updates",
+    "url": "https://www.facebook.com/tricityupdates"
+  }
+]
