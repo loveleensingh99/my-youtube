@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ChannelAvatar } from "@/components/ChannelAvatar";
@@ -9,6 +9,8 @@ import { useFeedContext } from "@/components/FeedProvider";
 import { WatchLoadMoreSkeleton } from "@/components/Skeleton";
 import { WatchPlayer } from "@/components/WatchPlayer";
 import { Button } from "@/components/ui/button";
+import { useVerticalSwipe } from "@/hooks/useVerticalSwipe";
+import { cn } from "@/lib/utils";
 import type { Video } from "@/types";
 import { formatPublishedDate } from "@/utils/date";
 
@@ -37,6 +39,50 @@ export function MobileWatchFeed({
   const videosRef = useRef(videos);
   const hasMoreRef = useRef(hasMore);
   const hasScrolledToInitialRef = useRef(false);
+  const [playerInteractive, setPlayerInteractive] = useState(false);
+  const playerInteractiveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const videoIds = useMemo(() => videos.map((video) => video.id).join(","), [videos]);
+
+  const scrollToIndex = useCallback((index: number) => {
+    const container = containerRef.current;
+    const slideCount = videosRef.current.length;
+    if (!container || index < 0 || index >= slideCount) return;
+
+    const slide = container.children[index] as HTMLElement | undefined;
+    slide?.scrollIntoView({ block: "start" });
+  }, []);
+
+  const enablePlayerInteraction = useCallback(() => {
+    if (playerInteractiveTimeoutRef.current) {
+      clearTimeout(playerInteractiveTimeoutRef.current);
+    }
+
+    setPlayerInteractive(true);
+    playerInteractiveTimeoutRef.current = setTimeout(() => {
+      setPlayerInteractive(false);
+      playerInteractiveTimeoutRef.current = null;
+    }, 5000);
+  }, []);
+
+  const swipe = useVerticalSwipe({
+    onSwipeUp: () => {
+      const index = videosRef.current.findIndex((video) => video.id === activeVideoIdRef.current);
+      scrollToIndex(index + 1);
+    },
+    onSwipeDown: () => {
+      const index = videosRef.current.findIndex((video) => video.id === activeVideoIdRef.current);
+      scrollToIndex(index - 1);
+    },
+    onTap: enablePlayerInteraction,
+  });
+
+  useEffect(() => {
+    return () => {
+      if (playerInteractiveTimeoutRef.current) {
+        clearTimeout(playerInteractiveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     activeVideoIdRef.current = activeVideoId;
@@ -104,7 +150,15 @@ export function MobileWatchFeed({
     const slides = Array.from(container.querySelectorAll<HTMLElement>("[data-video-id]"));
     slides.forEach((slide) => observer.observe(slide));
     return () => observer.disconnect();
-  }, [videos.length]);
+  }, [videoIds]);
+
+  useEffect(() => {
+    setPlayerInteractive(false);
+    if (playerInteractiveTimeoutRef.current) {
+      clearTimeout(playerInteractiveTimeoutRef.current);
+      playerInteractiveTimeoutRef.current = null;
+    }
+  }, [activeVideoId]);
 
   if (!activeVideo) {
     return null;
@@ -131,7 +185,7 @@ export function MobileWatchFeed({
 
       <div
         ref={containerRef}
-        className="h-[100dvh] snap-y snap-mandatory overflow-y-auto overscroll-y-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="h-[100dvh] snap-y snap-mandatory overflow-y-auto overscroll-y-contain touch-pan-y [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {videos.map((video, index) => {
           const isActive = video.id === activeVideoId;
@@ -144,13 +198,24 @@ export function MobileWatchFeed({
             >
               <div className="relative min-h-0 flex-1">
                 {isActive ? (
-                  <WatchPlayer
-                    videoId={video.id}
-                    title={video.title}
-                    autoplay
-                    fallbackDuration={video.durationSeconds ?? 0}
-                    className="h-full"
-                  />
+                  <>
+                    <WatchPlayer
+                      videoId={video.id}
+                      title={video.title}
+                      autoplay
+                      fallbackDuration={video.durationSeconds ?? 0}
+                      className="h-full"
+                    />
+                    <div
+                      className={cn(
+                        "absolute inset-0 z-10 touch-none",
+                        playerInteractive && "pointer-events-none",
+                      )}
+                      aria-hidden
+                      onTouchStart={swipe.onTouchStart}
+                      onTouchEnd={swipe.onTouchEnd}
+                    />
+                  </>
                 ) : (
                   <div className="relative h-full w-full">
                     <VideoThumbnail
