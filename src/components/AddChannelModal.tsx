@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,15 +22,26 @@ interface AddChannelModalProps {
 }
 
 export function AddChannelModal({
-  open,
+  open: openProp,
   onOpenChange,
   showTrigger = true,
   triggerLabel = "Add channel",
   triggerVariant = "default",
   triggerSize = "default",
 }: AddChannelModalProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : uncontrolledOpen;
+
+  const setOpen = (next: boolean) => {
+    if (!isControlled) {
+      setUncontrolledOpen(next);
+    }
+    onOpenChange?.(next);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       {showTrigger ? (
         <DialogTrigger asChild>
           <Button type="button" variant={triggerVariant} size={triggerSize}>
@@ -45,7 +57,7 @@ export function AddChannelModal({
         <p className="text-sm text-muted-foreground">
           Paste a YouTube channel link, @handle, or channel ID. Search links are not supported.
         </p>
-        <AddChannelForm onSuccess={() => onOpenChange?.(false)} />
+        <AddChannelForm onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

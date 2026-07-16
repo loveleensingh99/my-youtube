@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,7 @@ interface AddPostsChannelModalProps {
 }
 
 export function AddPostsChannelModal({
-  open,
+  open: openProp,
   onOpenChange,
   showTrigger = true,
   triggerLabel = "Add channel",
@@ -30,8 +31,19 @@ export function AddPostsChannelModal({
   triggerSize = "default",
   onAdded,
 }: AddPostsChannelModalProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : uncontrolledOpen;
+
+  const setOpen = (next: boolean) => {
+    if (!isControlled) {
+      setUncontrolledOpen(next);
+    }
+    onOpenChange?.(next);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       {showTrigger ? (
         <DialogTrigger asChild>
           <Button type="button" variant={triggerVariant} size={triggerSize}>
@@ -50,7 +62,7 @@ export function AddPostsChannelModal({
         </p>
         <AddPostsChannelForm
           onAdded={onAdded}
-          onSuccess={() => onOpenChange?.(false)}
+          onSuccess={() => setOpen(false)}
         />
       </DialogContent>
     </Dialog>
