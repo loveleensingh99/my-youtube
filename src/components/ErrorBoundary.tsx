@@ -44,8 +44,8 @@ export class ErrorBoundary extends Component<Props, State> {
           title={this.props.fallbackTitle ?? "Something unexpected happened"}
           description={
             this.state.errorMessage
-              ? `${this.state.errorMessage} Your saved settings may be corrupted. Reset app data if refreshing does not help.`
-              : "Lumen encountered an error but your data is safe locally. Try refreshing the page."
+              ? `${this.state.errorMessage} Try refreshing. Reset clears local settings only — subscriptions stay in Firebase.`
+              : "Lumen encountered an error. Try refreshing the page. Your subscriptions are stored in Firebase."
           }
           onRetry={this.handleRetry}
           resetLabel="Reset app data"

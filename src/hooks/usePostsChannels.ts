@@ -2,233 +2,169 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFirebaseAuthContext } from "@/components/FirebaseAuthProvider";
-import { STORAGE_KEYS } from "@/constants/app";
 import { postsChannelsContentKey } from "@/lib/channels-sync-state";
+import { mergeById } from "@/lib/backup";
 import {
-  mergePostsChannels,
   saveRemotePostsChannels,
   subscribeRemotePostsChannels,
 } from "@/lib/firebase/posts-channels";
 import { isFirebaseConfigured } from "@/lib/firebase/config";
-import { mergeById } from "@/lib/backup";
-import { normalizePostsChannels } from "@/lib/storage";
 import type { PostsChannel } from "@/types";
-import { useLocalStorage } from "./useLocalStorage";
-
-function getLocalPostsUpdatedAt(): number {
-  if (typeof window === "undefined") {
-    return 0;
-  }
-
-  const value = window.localStorage.getItem(STORAGE_KEYS.postsChannelsUpdatedAt);
-  if (!value) return 0;
-  const parsed = Number.parseInt(value, 10);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function touchLocalPostsUpdatedAt(at = Date.now()): number {
-  if (typeof window === "undefined") {
-    return at;
-  }
-
-  window.localStorage.setItem(STORAGE_KEYS.postsChannelsUpdatedAt, String(at));
-  return at;
-}
 
 export function usePostsChannels() {
   const { configured: firebaseConfigured, user, loading: authLoading } = useFirebaseAuthContext();
-  const { value: postsChannels, setValue } = useLocalStorage<PostsChannel[]>(
-    STORAGE_KEYS.postsChannels,
-    [],
-    normalizePostsChannels,
-  );
-  const firebaseEnabled = isFirebaseConfigured() && firebaseConfigured && Boolean(user);
-  const [firebaseSyncActive, setFirebaseSyncActive] = useState(firebaseEnabled && !authLoading);
+  const [postsChannels, setPostsChannels] = useState<PostsChannel[]>([]);
+  const [ready, setReady] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const postsChannelsRef = useRef(postsChannels);
-  const hasSeededRemoteRef = useRef(false);
-  const applyingRemoteRef = useRef(false);
+  const pendingWritesRef = useRef(0);
   const lastSavedKeyRef = useRef("");
+  const hasReceivedRemoteRef = useRef(false);
+
+  const firebaseEnabled = isFirebaseConfigured() && firebaseConfigured && Boolean(user);
+  const firebaseSyncActive = firebaseEnabled && !authLoading && ready && !syncError;
 
   useEffect(() => {
     postsChannelsRef.current = postsChannels;
   }, [postsChannels]);
 
-  useEffect(() => {
-    setFirebaseSyncActive(firebaseEnabled && !authLoading);
-    if (!firebaseEnabled) {
-      hasSeededRemoteRef.current = false;
-      lastSavedKeyRef.current = "";
-    }
-  }, [firebaseEnabled, authLoading]);
-
-  const persistLocal = useCallback(
-    (next: PostsChannel[] | ((prev: PostsChannel[]) => PostsChannel[])) => {
-      touchLocalPostsUpdatedAt();
-      setValue(next);
-    },
-    [setValue],
-  );
-
-  const pushPostsChannelsToFirebase = useCallback(
+  const persistPostsChannels = useCallback(
     async (next: PostsChannel[]) => {
+      setPostsChannels(next);
+      postsChannelsRef.current = next;
+
       if (!user) {
-        return;
+        return { ok: false as const, error: "Sign in to save posts channels." };
       }
 
+      pendingWritesRef.current += 1;
       const nextKey = postsChannelsContentKey(next);
-      if (nextKey === lastSavedKeyRef.current) {
-        return;
-      }
 
-      const result = await saveRemotePostsChannels(user.uid, next);
-      if (!result.ok) {
-        setFirebaseSyncActive(false);
-        return;
-      }
+      try {
+        const result = await saveRemotePostsChannels(user.uid, next);
+        if (!result.ok) {
+          setSyncError(result.error);
+          return result;
+        }
 
-      touchLocalPostsUpdatedAt(result.updatedAt);
-      lastSavedKeyRef.current = nextKey;
+        lastSavedKeyRef.current = nextKey;
+        setSyncError(null);
+        return result;
+      } finally {
+        pendingWritesRef.current -= 1;
+      }
     },
     [user],
   );
 
   useEffect(() => {
-    if (!firebaseEnabled || !firebaseSyncActive || !user) {
+    if (authLoading) {
       return;
     }
+
+    if (!firebaseEnabled || !user) {
+      hasReceivedRemoteRef.current = false;
+      lastSavedKeyRef.current = "";
+      setPostsChannels([]);
+      setReady(true);
+      setSyncError(null);
+      return;
+    }
+
+    setReady(false);
+    setSyncError(null);
+    hasReceivedRemoteRef.current = false;
+
+    const timeoutId = window.setTimeout(() => {
+      if (!hasReceivedRemoteRef.current) {
+        setSyncError("Could not connect to Firebase for posts channels.");
+        setReady(true);
+      }
+    }, 8000);
 
     const unsubscribe = subscribeRemotePostsChannels(
       user.uid,
-      ({ postsChannels: remotePostsChannels, postsChannelsUpdatedAt }) => {
-        const localPostsChannels = postsChannelsRef.current;
-        const localKey = postsChannelsContentKey(localPostsChannels);
+      ({ postsChannels: remotePostsChannels }) => {
+        window.clearTimeout(timeoutId);
+        hasReceivedRemoteRef.current = true;
+
         const remoteKey = postsChannelsContentKey(remotePostsChannels);
-        const localUpdatedAt = getLocalPostsUpdatedAt();
 
-        if (!hasSeededRemoteRef.current) {
-          hasSeededRemoteRef.current = true;
-
-          if (remotePostsChannels.length === 0 && localPostsChannels.length > 0) {
-            void pushPostsChannelsToFirebase(localPostsChannels);
-            return;
-          }
-
-          if (localPostsChannels.length === 0) {
-            applyingRemoteRef.current = true;
-            persistLocal(remotePostsChannels);
-            touchLocalPostsUpdatedAt(postsChannelsUpdatedAt || Date.now());
-            lastSavedKeyRef.current = remoteKey;
-            return;
-          }
-
-          const merged = mergePostsChannels(localPostsChannels, remotePostsChannels);
-          const mergedKey = postsChannelsContentKey(merged);
-
-          if (mergedKey === remoteKey) {
-            applyingRemoteRef.current = true;
-            persistLocal(remotePostsChannels);
-            touchLocalPostsUpdatedAt(postsChannelsUpdatedAt || Date.now());
-            lastSavedKeyRef.current = remoteKey;
-            return;
-          }
-
-          applyingRemoteRef.current = true;
-          persistLocal(merged);
-          touchLocalPostsUpdatedAt(Math.max(localUpdatedAt, postsChannelsUpdatedAt, Date.now()));
-          lastSavedKeyRef.current = "";
-          void pushPostsChannelsToFirebase(merged);
+        if (pendingWritesRef.current > 0) {
+          setReady(true);
           return;
         }
 
-        if (localKey === remoteKey) {
-          lastSavedKeyRef.current = remoteKey;
+        if (
+          remoteKey === lastSavedKeyRef.current &&
+          remoteKey === postsChannelsContentKey(postsChannelsRef.current)
+        ) {
+          setReady(true);
+          setSyncError(null);
           return;
         }
 
-        if (postsChannelsUpdatedAt > localUpdatedAt) {
-          applyingRemoteRef.current = true;
-          persistLocal(remotePostsChannels);
-          touchLocalPostsUpdatedAt(postsChannelsUpdatedAt || Date.now());
-          lastSavedKeyRef.current = remoteKey;
-          return;
-        }
-
-        const localIds = new Set(localPostsChannels.map((channel) => channel.id));
-        const remoteIds = new Set(remotePostsChannels.map((channel) => channel.id));
-        const localIsStrictSubset =
-          localIds.size < remoteIds.size && [...localIds].every((id) => remoteIds.has(id));
-
-        if (localIsStrictSubset) {
-          applyingRemoteRef.current = true;
-          persistLocal(remotePostsChannels);
-          touchLocalPostsUpdatedAt(postsChannelsUpdatedAt || Date.now());
-          lastSavedKeyRef.current = remoteKey;
-          return;
-        }
-
-        void pushPostsChannelsToFirebase(localPostsChannels);
+        lastSavedKeyRef.current = remoteKey;
+        setPostsChannels(remotePostsChannels);
+        postsChannelsRef.current = remotePostsChannels;
+        setReady(true);
+        setSyncError(null);
       },
       () => {
-        setFirebaseSyncActive(false);
+        window.clearTimeout(timeoutId);
+        setSyncError("Firebase sync is unavailable for posts channels.");
+        setReady(true);
       },
     );
 
-    return () => unsubscribe?.();
-  }, [firebaseEnabled, firebaseSyncActive, user, persistLocal, pushPostsChannelsToFirebase]);
-
-  useEffect(() => {
-    if (!firebaseEnabled || !firebaseSyncActive || !hasSeededRemoteRef.current) {
+    if (!unsubscribe) {
+      window.clearTimeout(timeoutId);
+      setSyncError("Firebase is not configured.");
+      setReady(true);
       return;
     }
 
-    if (applyingRemoteRef.current) {
-      applyingRemoteRef.current = false;
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      void pushPostsChannelsToFirebase(postsChannelsRef.current);
-    }, 300);
-
-    return () => window.clearTimeout(timer);
-  }, [postsChannels, firebaseEnabled, firebaseSyncActive, pushPostsChannelsToFirebase]);
+    return () => {
+      window.clearTimeout(timeoutId);
+      unsubscribe();
+    };
+  }, [authLoading, firebaseEnabled, user]);
 
   const addPostsChannel = useCallback(
     (channel: PostsChannel) => {
-      persistLocal((prev) => {
-        if (prev.some((entry) => entry.id === channel.id)) {
-          return prev;
-        }
+      if (postsChannelsRef.current.some((entry) => entry.id === channel.id)) {
+        return;
+      }
 
-        return [...prev, channel];
-      });
+      void persistPostsChannels([...postsChannelsRef.current, channel]);
     },
-    [persistLocal],
+    [persistPostsChannels],
   );
 
-  /** Merge imported posts channels; existing ids are skipped. */
   const importPostsChannels = useCallback(
     (incoming: PostsChannel[]) => {
       const { merged, added, skipped } = mergeById(postsChannelsRef.current, incoming);
       if (added > 0) {
-        persistLocal(merged);
+        void persistPostsChannels(merged);
       }
       return { added, skipped };
     },
-    [persistLocal],
+    [persistPostsChannels],
   );
 
   const removePostsChannel = useCallback(
     (channelId: string) => {
-      persistLocal((prev) => prev.filter((channel) => channel.id !== channelId));
+      void persistPostsChannels(
+        postsChannelsRef.current.filter((channel) => channel.id !== channelId),
+      );
     },
-    [persistLocal],
+    [persistPostsChannels],
   );
 
   const updatePostsChannel = useCallback(
     (channelId: string, updates: Pick<PostsChannel, "name" | "category">) => {
-      persistLocal((prev) =>
-        prev.map((channel) =>
+      void persistPostsChannels(
+        postsChannelsRef.current.map((channel) =>
           channel.id === channelId
             ? {
                 ...channel,
@@ -239,7 +175,7 @@ export function usePostsChannels() {
         ),
       );
     },
-    [persistLocal],
+    [persistPostsChannels],
   );
 
   const hasPostsChannel = useCallback(
@@ -256,18 +192,22 @@ export function usePostsChannels() {
     hasPostsChannel,
     firebaseSyncActive,
     firebaseConfigured,
+    syncError,
+    isHydrated: ready,
     channelsStorageDescription: useMemo(() => {
       if (!firebaseConfigured) {
-        return "Posts channels are currently stored only on this device.";
+        return "Firebase is required to store posts channels.";
       }
       if (!user) {
-        return "Sign in to sync posts channels across devices.";
+        return "Sign in to load and save posts channels in the cloud.";
       }
-      if (!firebaseSyncActive) {
-        return "Using local storage for posts channels right now.";
+      if (syncError) {
+        return syncError;
       }
-      return "Posts channels sync to your account across devices.";
-    }, [firebaseConfigured, firebaseSyncActive, user]),
-    isHydrated: true,
+      if (!ready) {
+        return "Loading posts channels from Firebase…";
+      }
+      return "Posts channels are stored only in Firebase and sync across your devices.";
+    }, [firebaseConfigured, ready, syncError, user]),
   };
 }

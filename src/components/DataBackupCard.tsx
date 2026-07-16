@@ -90,8 +90,8 @@ export function DataBackupCard() {
       <CardHeader>
         <CardTitle>Backup</CardTitle>
         <CardDescription>
-          Export subscriptions and posts channels to a JSON file, or import a backup to merge
-          with your existing lists. Existing channels are never removed.
+          Export subscriptions and posts channels from Firebase to a JSON file, or import a backup
+          to merge into your cloud lists. Existing channels are never removed.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-wrap gap-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFirebaseAuthContext } from "@/components/FirebaseAuthProvider";
 import { useFeedContext } from "@/components/FeedProvider";
@@ -8,19 +8,27 @@ import { usePostsChannels } from "@/hooks/usePostsChannels";
 
 export function FirebaseChannelSync() {
   const { user } = useFirebaseAuthContext();
-  const { firebaseSyncActive: postsSyncActive, channelsStorageDescription: postsStorageDescription } =
-    usePostsChannels();
-  const { firebaseConfigured, firebaseSyncActive, channelsSyncError, channelsStorageDescription } =
-    useFeedContext();
+  const {
+    firebaseSyncActive: postsSyncActive,
+    channelsStorageDescription: postsStorageDescription,
+    isHydrated: postsReady,
+  } = usePostsChannels();
+  const {
+    firebaseConfigured,
+    firebaseSyncActive,
+    channelsSyncError,
+    channelsStorageDescription,
+    settingsHydrated,
+  } = useFeedContext();
 
   if (!firebaseConfigured) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Cloud sync</CardTitle>
+          <CardTitle>Cloud storage</CardTitle>
           <CardDescription>
-            Add Firebase settings in <code className="text-xs">.env.local</code> to sync your
-            personal channel list across devices. No sign-in needed.
+            Subscriptions and posts channels are stored only in Firebase. Add the settings below
+            in <code className="text-xs">.env.local</code>, then sign in.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -38,11 +46,11 @@ export function FirebaseChannelSync() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cloud sync</CardTitle>
+        <CardTitle>Cloud storage</CardTitle>
         <CardDescription>
           {user
-            ? "Your lists are tied to your signed-in account."
-            : "Sign in above to enable account-based sync."}
+            ? "Your subscriptions and posts channels live in Firebase for this account — not in the browser."
+            : "Sign in to load your lists from Firebase."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -50,18 +58,25 @@ export function FirebaseChannelSync() {
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">
             {channelsSyncError}
           </div>
+        ) : !settingsHydrated ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Loading subscriptions from Firebase…</span>
+          </div>
         ) : firebaseSyncActive ? (
           <div className="flex items-center gap-2 text-sm text-emerald-300">
             <Check className="h-4 w-4" />
-            <span>Subscriptions sync is active.</span>
+            <span>Subscriptions connected to Firebase.</span>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">{channelsStorageDescription}</p>
         )}
         <p className="text-xs text-muted-foreground">
           Posts channels:{" "}
-          {postsSyncActive ? (
-            <span className="text-emerald-300">Sync active</span>
+          {!postsReady ? (
+            <span>Loading…</span>
+          ) : postsSyncActive ? (
+            <span className="text-emerald-300">Connected</span>
           ) : (
             postsStorageDescription
           )}

@@ -4,16 +4,12 @@ export const APP_DESCRIPTION =
 
 export const STORAGE_KEYS = {
   settings: "focustube:settings",
-  channels: "focustube:channels",
   lastRefresh: "focustube:last-refresh",
   selectedFilter: "focustube:selected-filter",
   selectedChannel: "focustube:selected-channel",
   selectedTag: "focustube:selected-tag",
   sidebarCollapsed: "focustube:sidebar-collapsed",
   channelsSectionExpanded: "focustube:channels-section-expanded",
-  channelsUpdatedAt: "focustube:channels-updated-at",
-  postsChannels: "focustube:posts-channels",
-  postsChannelsUpdatedAt: "focustube:posts-channels-updated-at",
 } as const;
 
 export const RSS_BASE_URL =

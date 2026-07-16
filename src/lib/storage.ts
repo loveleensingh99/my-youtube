@@ -132,3 +132,20 @@ export function clearFocusTubeStorage() {
 
   window.dispatchEvent(new CustomEvent("focustube:storage", { detail: { key: "*" } }));
 }
+
+/** Remove legacy browser copies of channel lists (Firebase is the source of truth). */
+export function clearLegacyChannelLocalStorage() {
+  if (typeof window === "undefined") return;
+
+  const legacyKeys = [
+    "focustube:channels",
+    "focustube:channels-updated-at",
+    "focustube:posts-channels",
+    "focustube:posts-channels-updated-at",
+  ];
+
+  for (const key of legacyKeys) {
+    window.localStorage.removeItem(key);
+  }
+}
+
