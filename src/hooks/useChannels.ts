@@ -14,6 +14,7 @@ import {
 } from "@/lib/channels-sync-state";
 import { saveRemoteChannels, subscribeRemoteChannels } from "@/lib/firebase/channels";
 import { isFirebaseConfigured } from "@/lib/firebase/config";
+import { mergeById } from "@/lib/backup";
 import { normalizeChannels } from "@/lib/storage";
 import { STORAGE_KEYS } from "@/constants/app";
 import type { Channel } from "@/types";
@@ -357,6 +358,18 @@ export function useChannels() {
     [persistChannelsLocally],
   );
 
+  /** Merge imported subscriptions; existing ids are skipped. */
+  const importChannels = useCallback(
+    (incoming: Channel[]) => {
+      const { merged, added, skipped } = mergeById(channelsRef.current, incoming);
+      if (added > 0) {
+        persistChannelsLocally(merged);
+      }
+      return { added, skipped };
+    },
+    [persistChannelsLocally],
+  );
+
   const removeChannel = useCallback(
     (channelId: string) => {
       const next = channelsRef.current.filter((channel) => channel.id !== channelId);
@@ -401,6 +414,7 @@ export function useChannels() {
   return {
     channels,
     addChannel,
+    importChannels,
     updateChannel,
     removeChannel,
     resetChannels,

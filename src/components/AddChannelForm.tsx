@@ -60,7 +60,10 @@ export function AddChannelForm({ onSuccess }: AddChannelFormProps) {
         </div>
       ) : null}
 
-      <form onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-4"
+      >
         <div className="grid gap-2">
           <Label htmlFor="channel-input">Channel link or ID</Label>
           <Input
@@ -94,7 +97,11 @@ export function AddChannelForm({ onSuccess }: AddChannelFormProps) {
           </div>
         </div>
 
-        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full sm:w-auto"
+        >
           {isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (

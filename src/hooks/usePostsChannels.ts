@@ -9,6 +9,7 @@ import {
   subscribeRemotePostsChannels,
 } from "@/lib/firebase/posts-channels";
 import { isFirebaseConfigured } from "@/lib/firebase/config";
+import { mergeById } from "@/lib/backup";
 import { normalizePostsChannels } from "@/lib/storage";
 import type { PostsChannel } from "@/types";
 import { useLocalStorage } from "./useLocalStorage";
@@ -178,6 +179,18 @@ export function usePostsChannels() {
     [persistLocal],
   );
 
+  /** Merge imported posts channels; existing ids are skipped. */
+  const importPostsChannels = useCallback(
+    (incoming: PostsChannel[]) => {
+      const { merged, added, skipped } = mergeById(postsChannelsRef.current, incoming);
+      if (added > 0) {
+        persistLocal(merged);
+      }
+      return { added, skipped };
+    },
+    [persistLocal],
+  );
+
   const removePostsChannel = useCallback(
     (channelId: string) => {
       persistLocal((prev) => prev.filter((channel) => channel.id !== channelId));
@@ -210,6 +223,7 @@ export function usePostsChannels() {
   return {
     postsChannels,
     addPostsChannel,
+    importPostsChannels,
     removePostsChannel,
     updatePostsChannel,
     hasPostsChannel,

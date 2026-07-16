@@ -1,6 +1,7 @@
 "use client";
 
 import { ChannelManager } from "@/components/ChannelManager";
+import { DataBackupCard } from "@/components/DataBackupCard";
 import { FirebaseAuthCard } from "@/components/FirebaseAuthCard";
 import { FirebaseChannelSync } from "@/components/FirebaseChannelSync";
 import { Header } from "@/components/Header";
@@ -27,6 +28,7 @@ export function SettingsPageClient() {
         <FirebaseAuthCard />
         <ChannelManager />
         <PostsChannelManager />
+        <DataBackupCard />
         <FirebaseChannelSync />
         <SettingsForm
           settings={settings}

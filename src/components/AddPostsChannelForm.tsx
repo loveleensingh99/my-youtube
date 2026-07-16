@@ -16,7 +16,10 @@ interface AddPostsChannelFormProps {
   onAdded?: () => void;
 }
 
-export function AddPostsChannelForm({ onSuccess, onAdded }: AddPostsChannelFormProps) {
+export function AddPostsChannelForm({
+  onSuccess,
+  onAdded,
+}: AddPostsChannelFormProps) {
   const { addPostsChannel, hasPostsChannel } = usePostsChannels();
   const tagSuggestions = useTagSuggestions();
   const [input, setInput] = useState("");
@@ -73,6 +76,7 @@ export function AddPostsChannelForm({ onSuccess, onAdded }: AddPostsChannelFormP
             placeholder="Auto-detected from YouTube"
             value={name}
             onChange={(event) => setName(event.target.value)}
+            
           />
         </div> */}
         <div className="grid gap-2">
@@ -88,10 +92,15 @@ export function AddPostsChannelForm({ onSuccess, onAdded }: AddPostsChannelFormP
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Paste a channel posts page like youtube.com/@handle/posts, a channel link, or @handle.
+        Paste a channel posts page like youtube.com/@handle/posts, a channel
+        link, or @handle.
       </p>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full sm:w-auto"
+      >
         {isSubmitting ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (

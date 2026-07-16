@@ -1,3 +1,4 @@
+export type { BackupImportResult, LumenBackup } from "./backup";
 export type { Channel, ChannelWithStats } from "./channel";
 export type { FeedFilter, FeedState } from "./feed";
 export type {

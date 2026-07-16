@@ -12,6 +12,7 @@ import type { Channel, FeedFilter, Settings, Video } from "@/types";
 interface FeedContextValue {
   channels: Channel[];
   addChannel: (channel: Channel) => void;
+  importChannels: (incoming: Channel[]) => { added: number; skipped: number };
   updateChannel: (channelId: string, updates: Pick<Channel, "name" | "category">) => void;
   removeChannel: (channelId: string) => void;
   addChannelFromInput: (
@@ -57,6 +58,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   const {
     channels,
     addChannel,
+    importChannels,
     updateChannel,
     removeChannel,
     hasChannel,
@@ -111,6 +113,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     () => ({
       channels,
       addChannel,
+      importChannels,
       updateChannel,
       removeChannel,
       addChannelFromInput,
@@ -148,6 +151,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     [
       channels,
       addChannel,
+      importChannels,
       updateChannel,
       removeChannel,
       addChannelFromInput,
