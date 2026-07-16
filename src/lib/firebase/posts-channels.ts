@@ -25,6 +25,19 @@ function getRemoteUpdatedAt(value: unknown): number {
   return typeof updatedAt === "number" ? updatedAt : 0;
 }
 
+export function mergePostsChannels(
+  existing: PostsChannel[],
+  incoming: PostsChannel[],
+): PostsChannel[] {
+  const merged = new Map(existing.map((channel) => [channel.id, channel]));
+
+  for (const channel of incoming) {
+    merged.set(channel.id, channel);
+  }
+
+  return Array.from(merged.values());
+}
+
 export function subscribeRemotePostsChannels(
   userId: string,
   onChange: (snapshot: RemotePostsChannelsSnapshot) => void,

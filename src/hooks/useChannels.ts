@@ -5,66 +5,21 @@ import { enrichChannelAvatars } from "@/app/actions/channels";
 import { useFirebaseAuthContext } from "@/components/FirebaseAuthProvider";
 import { defaultChannels } from "@/data/channels";
 import {
-  channelIdsKey,
   channelsContentKey,
   getLocalChannelsUpdatedAt,
-  hasDeletedChannelsLocally,
-  hasPersistedLocalChannels,
   touchLocalChannelsUpdatedAt,
 } from "@/lib/channels-sync-state";
-import { saveRemoteChannels, subscribeRemoteChannels } from "@/lib/firebase/channels";
+import {
+  mergeChannels,
+  saveRemoteChannels,
+  subscribeRemoteChannels,
+} from "@/lib/firebase/channels";
 import { isFirebaseConfigured } from "@/lib/firebase/config";
 import { mergeById } from "@/lib/backup";
 import { normalizeChannels } from "@/lib/storage";
 import { STORAGE_KEYS } from "@/constants/app";
 import type { Channel } from "@/types";
 import { useLocalStorage } from "./useLocalStorage";
-
-function getChannelIds(channels: Channel[]): string[] {
-  return channels.map((channel) => channel.id);
-}
-
-function isDefaultChannelIds(channelIds: string[]): boolean {
-  return channelIdsKey(channelIds) === channelIdsKey(getChannelIds(defaultChannels));
-}
-
-function shouldPreferLocalOnSeed(
-  localChannels: Channel[],
-  remoteChannels: Channel[],
-  localUpdatedAt: number,
-  remoteUpdatedAt: number,
-): boolean {
-  const localIds = new Set(getChannelIds(localChannels));
-  const remoteIds = new Set(getChannelIds(remoteChannels));
-  const localIdsKey = channelIdsKey([...localIds]);
-  const remoteIdsKey = channelIdsKey([...remoteIds]);
-
-  if (localIdsKey === remoteIdsKey) {
-    return false;
-  }
-
-  const deletedLocally =
-    hasDeletedChannelsLocally(localIds, remoteIds) && localIds.size <= remoteIds.size;
-
-  if (deletedLocally) {
-    return true;
-  }
-
-  if (localUpdatedAt > remoteUpdatedAt) {
-    return true;
-  }
-
-  if (
-    localUpdatedAt === 0 &&
-    hasPersistedLocalChannels() &&
-    localChannels.length > 0 &&
-    (remoteUpdatedAt === 0 || isDefaultChannelIds(getChannelIds(remoteChannels)))
-  ) {
-    return true;
-  }
-
-  return localUpdatedAt > 0 && localUpdatedAt >= remoteUpdatedAt;
-}
 
 function applyRemoteChannels(
   remoteChannels: Channel[],
@@ -244,12 +199,40 @@ export function useChannels() {
             return;
           }
 
-          if (shouldPreferLocalOnSeed(localChannels, remoteChannels, localUpdatedAt, remoteUpdatedAt)) {
-            void pushChannelsToFirebase(localChannels);
-            setSyncError(null);
-            return;
+          // Union on first connect so a device with defaults / a short local list
+          // cannot wipe a fuller cloud list (and vice versa).
+          const merged = mergeChannels(localChannels, remoteChannels);
+          const mergedKey = channelsContentKey(merged);
+
+          if (mergedKey === remoteContentKey) {
+            applyRemoteChannels(
+              remoteChannels,
+              remoteUpdatedAt,
+              persistChannelsLocally,
+              applyingRemoteRef,
+              lastSavedIdsKeyRef,
+            );
+          } else {
+            applyingRemoteRef.current = true;
+            persistChannelsLocally(merged);
+            touchLocalChannelsUpdatedAt(Math.max(localUpdatedAt, remoteUpdatedAt, Date.now()));
+            lastSavedIdsKeyRef.current = "";
+            void pushChannelsToFirebase(merged);
           }
 
+          setSyncError(null);
+          return;
+        }
+
+        if (localContentKey === remoteContentKey) {
+          lastSavedIdsKeyRef.current = remoteContentKey;
+          setSyncError(null);
+          return;
+        }
+
+        // Prefer newer side. If local is only a subset of remote, never overwrite
+        // the cloud — that used to wipe fuller lists when a laptop still had defaults.
+        if (remoteUpdatedAt > localUpdatedAt) {
           applyRemoteChannels(
             remoteChannels,
             remoteUpdatedAt,
@@ -261,25 +244,24 @@ export function useChannels() {
           return;
         }
 
-        if (localContentKey === remoteContentKey) {
-          lastSavedIdsKeyRef.current = remoteContentKey;
+        const localIds = new Set(localChannels.map((channel) => channel.id));
+        const remoteIds = new Set(remoteChannels.map((channel) => channel.id));
+        const localIsStrictSubset =
+          localIds.size < remoteIds.size && [...localIds].every((id) => remoteIds.has(id));
+
+        if (localIsStrictSubset) {
+          applyRemoteChannels(
+            remoteChannels,
+            remoteUpdatedAt,
+            persistChannelsLocally,
+            applyingRemoteRef,
+            lastSavedIdsKeyRef,
+          );
           setSyncError(null);
           return;
         }
 
-        if (remoteUpdatedAt <= localUpdatedAt) {
-          void pushChannelsToFirebase(localChannels);
-          return;
-        }
-
-        applyRemoteChannels(
-          remoteChannels,
-          remoteUpdatedAt,
-          persistChannelsLocally,
-          applyingRemoteRef,
-          lastSavedIdsKeyRef,
-        );
-        setSyncError(null);
+        void pushChannelsToFirebase(localChannels);
       },
       () => {
         if (cancelled) {

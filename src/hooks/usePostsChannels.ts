@@ -5,6 +5,7 @@ import { useFirebaseAuthContext } from "@/components/FirebaseAuthProvider";
 import { STORAGE_KEYS } from "@/constants/app";
 import { postsChannelsContentKey } from "@/lib/channels-sync-state";
 import {
+  mergePostsChannels,
   saveRemotePostsChannels,
   subscribeRemotePostsChannels,
 } from "@/lib/firebase/posts-channels";
@@ -112,7 +113,7 @@ export function usePostsChannels() {
             return;
           }
 
-          if (localPostsChannels.length === 0 || postsChannelsUpdatedAt > localUpdatedAt) {
+          if (localPostsChannels.length === 0) {
             applyingRemoteRef.current = true;
             persistLocal(remotePostsChannels);
             touchLocalPostsUpdatedAt(postsChannelsUpdatedAt || Date.now());
@@ -120,9 +121,22 @@ export function usePostsChannels() {
             return;
           }
 
-          if (localKey !== remoteKey) {
-            void pushPostsChannelsToFirebase(localPostsChannels);
+          const merged = mergePostsChannels(localPostsChannels, remotePostsChannels);
+          const mergedKey = postsChannelsContentKey(merged);
+
+          if (mergedKey === remoteKey) {
+            applyingRemoteRef.current = true;
+            persistLocal(remotePostsChannels);
+            touchLocalPostsUpdatedAt(postsChannelsUpdatedAt || Date.now());
+            lastSavedKeyRef.current = remoteKey;
+            return;
           }
+
+          applyingRemoteRef.current = true;
+          persistLocal(merged);
+          touchLocalPostsUpdatedAt(Math.max(localUpdatedAt, postsChannelsUpdatedAt, Date.now()));
+          lastSavedKeyRef.current = "";
+          void pushPostsChannelsToFirebase(merged);
           return;
         }
 
@@ -131,15 +145,28 @@ export function usePostsChannels() {
           return;
         }
 
-        if (postsChannelsUpdatedAt <= localUpdatedAt) {
-          void pushPostsChannelsToFirebase(localPostsChannels);
+        if (postsChannelsUpdatedAt > localUpdatedAt) {
+          applyingRemoteRef.current = true;
+          persistLocal(remotePostsChannels);
+          touchLocalPostsUpdatedAt(postsChannelsUpdatedAt || Date.now());
+          lastSavedKeyRef.current = remoteKey;
           return;
         }
 
-        applyingRemoteRef.current = true;
-        persistLocal(remotePostsChannels);
-        touchLocalPostsUpdatedAt(postsChannelsUpdatedAt || Date.now());
-        lastSavedKeyRef.current = remoteKey;
+        const localIds = new Set(localPostsChannels.map((channel) => channel.id));
+        const remoteIds = new Set(remotePostsChannels.map((channel) => channel.id));
+        const localIsStrictSubset =
+          localIds.size < remoteIds.size && [...localIds].every((id) => remoteIds.has(id));
+
+        if (localIsStrictSubset) {
+          applyingRemoteRef.current = true;
+          persistLocal(remotePostsChannels);
+          touchLocalPostsUpdatedAt(postsChannelsUpdatedAt || Date.now());
+          lastSavedKeyRef.current = remoteKey;
+          return;
+        }
+
+        void pushPostsChannelsToFirebase(localPostsChannels);
       },
       () => {
         setFirebaseSyncActive(false);
