@@ -10,6 +10,7 @@ import {
 } from "@/lib/firebase/posts-channels";
 import { isFirebaseConfigured } from "@/lib/firebase/config";
 import type { PostsChannel } from "@/types";
+import { renameChannelTag } from "@/utils/channels";
 
 export function usePostsChannels() {
   const { configured: firebaseConfigured, user, loading: authLoading } = useFirebaseAuthContext();
@@ -178,6 +179,26 @@ export function usePostsChannels() {
     [persistPostsChannels],
   );
 
+  const renameTag = useCallback(
+    (oldTag: string, newTag: string) => {
+      const previous = postsChannelsRef.current;
+      const next = renameChannelTag(previous, oldTag, newTag);
+      const changed = previous.reduce(
+        (count, channel, index) =>
+          channel.category !== next[index]?.category ? count + 1 : count,
+        0,
+      );
+
+      if (changed === 0) {
+        return 0;
+      }
+
+      void persistPostsChannels(next);
+      return changed;
+    },
+    [persistPostsChannels],
+  );
+
   const hasPostsChannel = useCallback(
     (channelId: string) => postsChannels.some((channel) => channel.id === channelId),
     [postsChannels],
@@ -189,6 +210,7 @@ export function usePostsChannels() {
     importPostsChannels,
     removePostsChannel,
     updatePostsChannel,
+    renameTag,
     hasPostsChannel,
     firebaseSyncActive,
     firebaseConfigured,

@@ -9,6 +9,7 @@ import { PostsChannelManager } from "@/components/PostsChannelManager";
 import { ProfilePageHeader } from "@/components/ProfilePageHeader";
 import { SettingsForm } from "@/components/SettingsForm";
 import { SettingsPageSkeleton } from "@/components/Skeleton";
+import { TagManager } from "@/components/TagManager";
 import { useFeedContext } from "@/components/FeedProvider";
 
 export function SettingsPageClient() {
@@ -28,6 +29,7 @@ export function SettingsPageClient() {
         <FirebaseAuthCard />
         <ChannelManager />
         <PostsChannelManager />
+        <TagManager />
         <DataBackupCard />
         <FirebaseChannelSync />
         <SettingsForm

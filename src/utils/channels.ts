@@ -17,6 +17,23 @@ export function getChannelTags(channels: Array<Pick<Channel, "category">>): stri
   return [...tags].sort((a, b) => a.localeCompare(b));
 }
 
+export function renameChannelTag<T extends { category: string }>(
+  items: T[],
+  oldTag: string,
+  newTag: string,
+): T[] {
+  const from = oldTag.trim();
+  const to = newTag.trim() || "General";
+
+  if (!from || from === to) {
+    return items;
+  }
+
+  return items.map((item) =>
+    item.category.trim() === from ? { ...item, category: to } : item,
+  );
+}
+
 export function getChannelName(channels: Channel[], channelId: string): string | null {
   return channels.find((channel) => channel.id === channelId)?.name ?? null;
 }

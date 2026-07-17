@@ -14,6 +14,7 @@ interface FeedContextValue {
   addChannel: (channel: Channel) => void;
   importChannels: (incoming: Channel[]) => { added: number; skipped: number };
   updateChannel: (channelId: string, updates: Pick<Channel, "name" | "category">) => void;
+  renameTag: (oldTag: string, newTag: string) => number;
   removeChannel: (channelId: string) => void;
   addChannelFromInput: (
     input: string,
@@ -60,6 +61,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     addChannel,
     importChannels,
     updateChannel,
+    renameTag: renameChannelsTag,
     removeChannel,
     hasChannel,
     isHydrated: settingsHydratedChannels,
@@ -71,6 +73,18 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   const { settings, updateSettings, resetSettings, isHydrated: settingsHydrated } =
     useSettings();
   const filters = useFilters(settings.defaultFilter);
+
+  const renameTag = useCallback(
+    (oldTag: string, newTag: string) => {
+      const changed = renameChannelsTag(oldTag, newTag);
+      const trimmedNew = newTag.trim() || "General";
+      if (changed > 0 && filters.selectedTag === oldTag.trim()) {
+        filters.selectTag(trimmedNew === "General" ? null : trimmedNew);
+      }
+      return changed;
+    },
+    [filters.selectedTag, filters.selectTag, renameChannelsTag],
+  );
   const channelsToFetch = useMemo(() => {
     if (filters.selectedTag) {
       return channels.filter((channel) => channel.category === filters.selectedTag);
@@ -115,6 +129,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       addChannel,
       importChannels,
       updateChannel,
+      renameTag,
       removeChannel,
       addChannelFromInput,
       videos: feed.videos,
@@ -153,6 +168,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       addChannel,
       importChannels,
       updateChannel,
+      renameTag,
       removeChannel,
       addChannelFromInput,
       feed.videos,

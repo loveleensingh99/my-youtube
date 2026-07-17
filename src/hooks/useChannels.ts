@@ -9,6 +9,7 @@ import { clearLegacyChannelLocalStorage } from "@/lib/storage";
 import { saveRemoteChannels, subscribeRemoteChannels } from "@/lib/firebase/channels";
 import { isFirebaseConfigured } from "@/lib/firebase/config";
 import type { Channel } from "@/types";
+import { renameChannelTag } from "@/utils/channels";
 
 export function useChannels() {
   const { configured: firebaseConfigured, user, loading: authLoading } = useFirebaseAuthContext();
@@ -219,6 +220,26 @@ export function useChannels() {
     [persistChannels],
   );
 
+  const renameTag = useCallback(
+    (oldTag: string, newTag: string) => {
+      const previous = channelsRef.current;
+      const next = renameChannelTag(previous, oldTag, newTag);
+      const changed = previous.reduce(
+        (count, channel, index) =>
+          channel.category !== next[index]?.category ? count + 1 : count,
+        0,
+      );
+
+      if (changed === 0) {
+        return 0;
+      }
+
+      void persistChannels(next);
+      return changed;
+    },
+    [persistChannels],
+  );
+
   const hasChannel = useCallback(
     (channelId: string) => channels.some((channel) => channel.id === channelId),
     [channels],
@@ -249,6 +270,7 @@ export function useChannels() {
     addChannel,
     importChannels,
     updateChannel,
+    renameTag,
     removeChannel,
     hasChannel,
     isHydrated: ready,
