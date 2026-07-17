@@ -7,6 +7,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { useFilters } from "@/hooks/useFilters";
 import { useRefresh } from "@/hooks/useRefresh";
 import { useChannels } from "@/hooks/useChannels";
+import { useMutedKeywords } from "@/hooks/useMutedKeywords";
 import type { Channel, FeedFilter, Settings, Video } from "@/types";
 
 interface FeedContextValue {
@@ -69,8 +70,42 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     firebaseConfigured,
     firebaseSyncActive,
   } = useChannels();
-  const { settings, updateSettings, resetSettings, isHydrated: settingsHydrated } =
-    useSettings();
+  const {
+    settings: localSettings,
+    updateSettings: updateLocalSettings,
+    resetSettings: resetLocalSettings,
+    isHydrated: settingsHydrated,
+  } = useSettings();
+  const {
+    mutedKeywords,
+    setMutedKeywords,
+    isHydrated: mutedKeywordsHydrated,
+  } = useMutedKeywords();
+
+  const settings = useMemo<Settings>(
+    () => ({ ...localSettings, mutedKeywords }),
+    [localSettings, mutedKeywords],
+  );
+
+  const updateSettings = useCallback(
+    (partial: Partial<Settings>) => {
+      if (partial.mutedKeywords !== undefined) {
+        void setMutedKeywords(partial.mutedKeywords);
+      }
+
+      const { mutedKeywords: _ignored, ...rest } = partial;
+      if (Object.keys(rest).length > 0) {
+        updateLocalSettings(rest);
+      }
+    },
+    [setMutedKeywords, updateLocalSettings],
+  );
+
+  const resetSettings = useCallback(() => {
+    resetLocalSettings();
+    void setMutedKeywords([]);
+  }, [resetLocalSettings, setMutedKeywords]);
+
   const filters = useFilters(settings.defaultFilter);
 
   const renameTag = useCallback(
@@ -145,7 +180,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       settings,
       updateSettings,
       resetSettings,
-      settingsHydrated: settingsHydrated && settingsHydratedChannels,
+      settingsHydrated: settingsHydrated && settingsHydratedChannels && mutedKeywordsHydrated,
       filter: filters.filter,
       setFilter: filters.setFilter,
       selectedChannel: filters.selectedChannel,
@@ -185,6 +220,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       resetSettings,
       settingsHydrated,
       settingsHydratedChannels,
+      mutedKeywordsHydrated,
       filters.filter,
       filters.setFilter,
       filters.selectedChannel,

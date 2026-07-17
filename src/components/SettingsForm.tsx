@@ -103,7 +103,7 @@ export function SettingsForm({ settings, onUpdate, onReset }: SettingsFormProps)
           <CardTitle>Keyword mute</CardTitle>
           <CardDescription>
             Hide videos whose titles match words you don&apos;t want to see — spoilers, topics, or
-            phrases.
+            phrases. Keywords sync with your account in Firebase.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -240,6 +240,7 @@ function MutedKeywordsEditor({
       ) : (
         <p className="text-sm text-muted-foreground">
           No muted keywords yet. Matching titles are hidden from Home, channel pages, and up next.
+          Keywords are stored in Firebase and sync across your devices.
         </p>
       )}
     </div>
