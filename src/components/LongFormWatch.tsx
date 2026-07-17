@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -23,10 +24,13 @@ export function LongFormWatch({ video, upNext = [] }: LongFormWatchProps) {
   const { isLandscape } = useDeviceOrientation();
   const channelHref = video.channelId ? `/channel/${video.channelId}` : null;
   const duration = formatDuration(video.durationSeconds);
+  const [revealControlsToken, setRevealControlsToken] = useState(0);
+
+  const bumpControls = () => setRevealControlsToken((token) => token + 1);
 
   if (isLandscape) {
     return (
-      <div className="fixed inset-0 z-50 bg-black">
+      <div className="fixed inset-0 z-50 bg-black" onPointerDown={bumpControls}>
         <div className="absolute left-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20">
           <Button
             type="button"
@@ -43,6 +47,8 @@ export function LongFormWatch({ video, upNext = [] }: LongFormWatchProps) {
           videoId={video.id}
           title={video.title}
           autoplay
+          immersive
+          revealControlsToken={revealControlsToken}
           fallbackDuration={video.durationSeconds ?? 0}
           className="h-full w-full"
         />
@@ -71,6 +77,7 @@ export function LongFormWatch({ video, upNext = [] }: LongFormWatchProps) {
           videoId={video.id}
           title={video.title}
           autoplay
+          revealControlsToken={revealControlsToken}
           fallbackDuration={video.durationSeconds ?? 0}
           className="h-full w-full"
         />

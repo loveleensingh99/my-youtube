@@ -11,6 +11,7 @@ import {
 } from "react";
 import { cn } from "@/lib/utils";
 import { WatchPlayerSkeleton } from "@/components/Skeleton";
+import { VideoRotateControl } from "@/components/VideoRotateControl";
 import { loadYouTubeIframeApi, YOUTUBE_PLAYER_STATE, type YouTubePlayer } from "@/lib/youtube-player-api";
 
 export interface WatchPlayerHandle {
@@ -23,18 +24,40 @@ interface WatchPlayerProps {
   autoplay?: boolean;
   className?: string;
   fallbackDuration?: number;
+  /** Immersive full-bleed watch UI (mobile feed / landscape). */
+  immersive?: boolean;
+  /** Increment after a tap to re-show the rotate button for 5 seconds. */
+  revealControlsToken?: number;
   onProgress?: (currentTime: number, duration: number) => void;
 }
 
+function getFullscreenElement(): Element | null {
+  const doc = document as Document & {
+    webkitFullscreenElement?: Element | null;
+  };
+  return document.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+}
+
 export const WatchPlayer = forwardRef<WatchPlayerHandle, WatchPlayerProps>(function WatchPlayer(
-  { videoId, title, autoplay = false, className, fallbackDuration = 0, onProgress },
+  {
+    videoId,
+    title,
+    autoplay = false,
+    className,
+    fallbackDuration = 0,
+    immersive = false,
+    revealControlsToken = 0,
+    onProgress,
+  },
   ref,
 ) {
   const containerId = useId().replace(/:/g, "");
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const onProgressRef = useRef(onProgress);
   const fallbackDurationRef = useRef(fallbackDuration);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     setIsPlayerReady(false);
@@ -44,6 +67,23 @@ export const WatchPlayer = forwardRef<WatchPlayerHandle, WatchPlayerProps>(funct
     onProgressRef.current = onProgress;
     fallbackDurationRef.current = fallbackDuration;
   });
+
+  useEffect(() => {
+    const syncFullscreen = () => {
+      const active = getFullscreenElement();
+      const wrapper = wrapperRef.current;
+      setIsFullscreen(Boolean(active && wrapper && (active === wrapper || wrapper.contains(active))));
+    };
+
+    syncFullscreen();
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    document.addEventListener("webkitfullscreenchange", syncFullscreen as EventListener);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreen);
+      document.removeEventListener("webkitfullscreenchange", syncFullscreen as EventListener);
+    };
+  }, []);
 
   const seekToTime = useCallback((seconds: number) => {
     const player = playerRef.current;
@@ -114,10 +154,17 @@ export const WatchPlayer = forwardRef<WatchPlayerHandle, WatchPlayerProps>(funct
     };
   }, [autoplay, containerId, videoId]);
 
+  const showRotateControl = immersive || isFullscreen;
+
   return (
-    <div className={cn("relative h-full w-full bg-black", className)}>
+    <div ref={wrapperRef} className={cn("relative h-full w-full bg-black", className)}>
       {!isPlayerReady ? <WatchPlayerSkeleton /> : null}
       <div id={containerId} title={title} className="absolute inset-0 h-full w-full" />
+      <VideoRotateControl
+        containerRef={wrapperRef}
+        enabled={showRotateControl}
+        revealToken={revealControlsToken}
+      />
     </div>
   );
 });

@@ -42,6 +42,7 @@ export function MobileWatchFeed({
   const hasMoreRef = useRef(hasMore);
   const hasScrolledToInitialRef = useRef(false);
   const [playerInteractive, setPlayerInteractive] = useState(false);
+  const [revealControlsToken, setRevealControlsToken] = useState(0);
   const playerInteractiveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoIds = useMemo(() => videos.map((video) => video.id).join(","), [videos]);
 
@@ -60,6 +61,7 @@ export function MobileWatchFeed({
     }
 
     setPlayerInteractive(true);
+    setRevealControlsToken((token) => token + 1);
     playerInteractiveTimeoutRef.current = setTimeout(() => {
       setPlayerInteractive(false);
       playerInteractiveTimeoutRef.current = null;
@@ -210,6 +212,8 @@ export function MobileWatchFeed({
                       videoId={video.id}
                       title={video.title}
                       autoplay
+                      immersive
+                      revealControlsToken={revealControlsToken}
                       fallbackDuration={video.durationSeconds ?? 0}
                       className="h-full"
                     />
