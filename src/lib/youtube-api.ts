@@ -36,6 +36,7 @@ interface ChannelsResponse {
   items?: Array<{
     id?: string;
     snippet?: {
+      title?: string;
       thumbnails?: YouTubeThumbnails;
     };
     contentDetails?: {
@@ -57,11 +58,11 @@ function getChannelAvatarUrl(
   );
 }
 
-export async function fetchChannelAvatars(
+export async function fetchChannelDetails(
   channelIds: string[],
   apiKey: string,
-): Promise<Record<string, string>> {
-  const avatars: Record<string, string> = {};
+): Promise<Record<string, { title?: string; avatarUrl?: string }>> {
+  const details: Record<string, { title?: string; avatarUrl?: string }> = {};
   const uniqueIds = [...new Set(channelIds.filter(Boolean))];
 
   for (let index = 0; index < uniqueIds.length; index += 50) {
@@ -77,11 +78,33 @@ export async function fetchChannelAvatars(
 
     data.items?.forEach((item) => {
       const channelId = item.id;
-      const avatarUrl = getChannelAvatarUrl(item.snippet);
-      if (channelId && avatarUrl) {
-        avatars[channelId] = avatarUrl;
+      if (!channelId) {
+        return;
       }
+
+      const title = item.snippet?.title?.trim();
+      const avatarUrl = getChannelAvatarUrl(item.snippet);
+      details[channelId] = {
+        ...(title ? { title } : {}),
+        ...(avatarUrl ? { avatarUrl } : {}),
+      };
     });
+  }
+
+  return details;
+}
+
+export async function fetchChannelAvatars(
+  channelIds: string[],
+  apiKey: string,
+): Promise<Record<string, string>> {
+  const details = await fetchChannelDetails(channelIds, apiKey);
+  const avatars: Record<string, string> = {};
+
+  for (const [channelId, detail] of Object.entries(details)) {
+    if (detail.avatarUrl) {
+      avatars[channelId] = detail.avatarUrl;
+    }
   }
 
   return avatars;

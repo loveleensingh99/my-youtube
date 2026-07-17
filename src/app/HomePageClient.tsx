@@ -4,6 +4,7 @@ import { useMemo, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/Header";
 import { FeedToolbar } from "@/components/FeedToolbar";
+import { MetalRatesChip } from "@/components/MetalRatesChip";
 import { VideoGrid } from "@/components/VideoGrid";
 import { HomePageSkeleton } from "@/components/Skeleton";
 import { ErrorState } from "@/components/ErrorState";
@@ -91,6 +92,8 @@ export function HomePageClient() {
         isRefreshing={isLoading}
         feedSource={feedSource}
       />
+
+      <MetalRatesChip />
 
       <FeedToolbar
         tags={tags}

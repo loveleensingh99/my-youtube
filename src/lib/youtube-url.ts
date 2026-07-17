@@ -29,7 +29,7 @@ export function extractHandleFromUrl(input: string): string | null {
   const trimmed = input.trim();
 
   if (trimmed.startsWith("@")) {
-    return trimmed.slice(1);
+    return trimmed.slice(1).split(/[/?#]/)[0] || null;
   }
 
   const url = trimmed;
@@ -42,5 +42,37 @@ export function extractHandleFromUrl(input: string): string | null {
 }
 
 export function sanitizeChannelName(title: string): string {
-  return title.replace(/\s*-\s*YouTube\s*$/i, "").trim() || "YouTube Channel";
+  return title
+    .replace(/\s*-\s*YouTube\s*$/i, "")
+    .replace(/\s*[|·].*$/, "")
+    .trim() || "YouTube Channel";
+}
+
+export function extractChannelNameFromHtml(html: string): string | null {
+  const patterns = [
+    /itemprop="name"\s+content="([^"]+)"/i,
+    /property="og:title"\s+content="([^"]+)"/i,
+    /"channelMetadataRenderer"\s*:\s*\{[^}]*"title"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    const raw = match?.[1];
+    if (!raw) {
+      continue;
+    }
+
+    const decoded = raw
+      .replace(/\\"/g, '"')
+      .replace(/\\u0026/g, "&")
+      .replace(/&amp;/g, "&")
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"');
+    const name = sanitizeChannelName(decoded);
+    if (name && name !== "YouTube Channel") {
+      return name;
+    }
+  }
+
+  return null;
 }

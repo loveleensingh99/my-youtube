@@ -169,6 +169,10 @@ export function HomePageSkeleton({ shortsOnly = false }: { shortsOnly?: boolean 
   return (
     <>
       <HeaderSkeleton />
+      <div className="animate-pulse border-b border-white/10 bg-[#141414] px-4 py-2.5">
+        <div className="mb-1.5 h-2.5 w-24 rounded bg-secondary" />
+        <div className="h-4 w-64 max-w-full rounded bg-secondary" />
+      </div>
       <FeedToolbarSkeleton />
       <VideoGridSkeleton shortsOnly={shortsOnly} />
     </>
