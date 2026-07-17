@@ -5,6 +5,36 @@ import { defaultSettings } from "@/lib/defaults";
 const VALID_FILTERS: FeedFilter[] = ["all", "videos", "shorts"];
 const VALID_THUMBNAIL_SIZES: ThumbnailSize[] = ["small", "medium", "large"];
 
+export function normalizeMutedKeywords(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const keywords: string[] = [];
+
+  for (const item of value) {
+    if (typeof item !== "string") {
+      continue;
+    }
+
+    const trimmed = item.trim();
+    if (!trimmed) {
+      continue;
+    }
+
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    keywords.push(trimmed);
+  }
+
+  return keywords;
+}
+
 export function normalizeSettings(value: unknown): Settings {
   if (!value || typeof value !== "object") {
     return defaultSettings;
@@ -31,6 +61,7 @@ export function normalizeSettings(value: unknown): Settings {
       : defaultSettings.defaultFilter,
     youtubeApiKey:
       typeof raw.youtubeApiKey === "string" ? raw.youtubeApiKey.trim() : defaultSettings.youtubeApiKey,
+    mutedKeywords: normalizeMutedKeywords(raw.mutedKeywords),
   };
 }
 

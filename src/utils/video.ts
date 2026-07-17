@@ -127,6 +127,18 @@ export function createFallbackWatchVideo(videoId: string): Video {
   };
 }
 
+export function titleMatchesMutedKeywords(title: string, keywords: string[]): boolean {
+  if (keywords.length === 0) {
+    return false;
+  }
+
+  const normalizedTitle = title.toLowerCase();
+  return keywords.some((keyword) => {
+    const trimmed = keyword.trim().toLowerCase();
+    return trimmed.length > 0 && normalizedTitle.includes(trimmed);
+  });
+}
+
 export function filterVideos(
   videos: Video[],
   filter: FeedFilter,
@@ -139,6 +151,7 @@ export function filterVideos(
     if (filter === "shorts" && video.type !== "short") return false;
     if (!settings.showVideos && video.type === "video") return false;
     if (!settings.showShorts && video.type === "short") return false;
+    if (titleMatchesMutedKeywords(video.title, settings.mutedKeywords)) return false;
     return true;
   });
 }

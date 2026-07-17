@@ -13,6 +13,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   DatabaseBackup,
+  EyeOff,
   Home,
   ListVideo,
   LogOut,
@@ -89,6 +90,7 @@ const sideNavGroups: SideNavGroup[] = [
     label: "More",
     items: [
       { href: "/settings#settings", label: "Settings", icon: Settings2, match: "hash" },
+      { href: "/settings#keyword-mute", label: "Keyword mute", icon: EyeOff, match: "hash" },
       { href: "/settings#backup", label: "Backup", icon: DatabaseBackup, match: "hash" },
       { href: "/settings#account", label: "Account", icon: UserRound, match: "hash" },
     ],

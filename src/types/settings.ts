@@ -11,4 +11,6 @@ export interface Settings {
   thumbnailSize: ThumbnailSize;
   defaultFilter: FeedFilter;
   youtubeApiKey: string;
+  /** Hide videos whose titles contain any of these words (case-insensitive). */
+  mutedKeywords: string[];
 }

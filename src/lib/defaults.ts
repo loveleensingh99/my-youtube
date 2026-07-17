@@ -10,4 +10,5 @@ export const defaultSettings: Settings = {
   thumbnailSize: "medium",
   defaultFilter: "all",
   youtubeApiKey: "",
+  mutedKeywords: [],
 };
