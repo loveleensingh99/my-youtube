@@ -124,7 +124,10 @@ export function HeaderSkeleton({ withBack = false }: { withBack?: boolean }) {
         {withBack ? (
           <div className="h-9 w-9 shrink-0 rounded-full bg-secondary" />
         ) : (
-          <div className="h-7 w-7 shrink-0 rounded-md bg-secondary" />
+          <>
+            <div className="h-9 w-9 shrink-0 rounded-full bg-secondary" />
+            <div className="h-7 w-7 shrink-0 rounded-md bg-secondary" />
+          </>
         )}
         <div className="h-5 w-28 rounded bg-secondary" />
       </div>

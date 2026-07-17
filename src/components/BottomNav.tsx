@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ListVideo, MessageSquareText, UserRound } from "lucide-react";
+import { Home, ListVideo, MessageSquareText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/posts", label: "Posts", icon: MessageSquareText },
   { href: "/channels", label: "Subs", icon: ListVideo },
-  { href: "/settings", label: "Profile", icon: UserRound },
 ];
 
 export function BottomNav() {

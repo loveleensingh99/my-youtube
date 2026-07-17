@@ -1,10 +1,12 @@
 "use client";
 
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, Menu, RefreshCw } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { AppLogoMark } from "@/components/AppLogoMark";
 import { APP_NAME } from "@/constants/app";
 import { Button } from "@/components/ui/button";
 import { FeedSourceBadge } from "@/components/FeedSourceBadge";
+import { useSideNav } from "@/components/SideNav";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -24,6 +26,10 @@ export function Header({
   feedSource,
   className,
 }: HeaderProps) {
+  const pathname = usePathname();
+  const { setOpen } = useSideNav();
+  const showMenu = !onBack && pathname !== "/login";
+
   return (
     <header
       className={cn(
@@ -43,9 +49,21 @@ export function Header({
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
+        ) : showMenu ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0 rounded-full"
+            onClick={() => setOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
         ) : (
           <AppLogoMark className="h-7 w-7 shrink-0" />
         )}
+        {showMenu ? <AppLogoMark className="h-7 w-7 shrink-0" /> : null}
         <div className="flex min-w-0 items-center gap-2">
           <p className="truncate text-base font-semibold tracking-tight">{title ?? APP_NAME}</p>
           {feedSource ? <FeedSourceBadge source={feedSource} /> : null}

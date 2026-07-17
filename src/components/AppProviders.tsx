@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { BottomNav } from "@/components/BottomNav";
+import { SideNav, SideNavProvider } from "@/components/SideNav";
 import { useFirebaseAuthContext } from "@/components/FirebaseAuthProvider";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { cn } from "@/lib/utils";
@@ -39,7 +40,7 @@ export function AppProviders({ children, onRefresh }: AppProvidersProps) {
   const shouldHideApp = configured && !loading && ((isLoginPage && !!user) || (!isLoginPage && !user));
 
   return (
-    <>
+    <SideNavProvider>
       <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col bg-background text-foreground">
         <div
           className={cn(
@@ -49,9 +50,14 @@ export function AppProviders({ children, onRefresh }: AppProvidersProps) {
         >
           {shouldHideApp ? null : children}
         </div>
-        {!isWatchPage && !isLoginPage ? <BottomNav /> : null}
+        {!isWatchPage && !isLoginPage ? (
+          <>
+            <BottomNav />
+            <SideNav />
+          </>
+        ) : null}
       </div>
       <Toaster theme="dark" richColors closeButton position="top-center" />
-    </>
+    </SideNavProvider>
   );
 }
