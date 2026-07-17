@@ -1,6 +1,5 @@
 "use server";
 
-import { fetchChannelFeed } from "@/lib/rss";
 import { fetchChannelDetails } from "@/lib/youtube-api";
 import {
   extractChannelIdFromUrl,
@@ -70,28 +69,6 @@ async function fetchChannelPage(handle: string): Promise<{ id: string | null; na
   };
 }
 
-async function getChannelNameFromRss(channelId: string, fallback: string): Promise<string> {
-  try {
-    const feed = await fetchChannelFeed({
-      id: channelId,
-      name: fallback,
-      category: "General",
-    });
-    return sanitizeChannelName(feed.title);
-  } catch {
-    return fallback;
-  }
-}
-
-function looksLikeHandleOrId(name: string, handle: string | null, channelId: string): boolean {
-  const normalized = name.trim().toLowerCase();
-  return (
-    normalized === channelId.toLowerCase() ||
-    (handle !== null && normalized === handle.toLowerCase()) ||
-    normalized.startsWith("uc")
-  );
-}
-
 export async function resolveChannelInput(
   input: string,
   preferredName?: string,
@@ -146,14 +123,7 @@ export async function resolveChannelInput(
     }
   }
 
-  const fallbackName = preferredName?.trim() || scrapedName || handle || channelId;
-  let name = preferredName?.trim() || apiTitle || scrapedName || fallbackName;
-
-  if (!preferredName?.trim() && looksLikeHandleOrId(name, handle, channelId)) {
-    name = await getChannelNameFromRss(channelId, name);
-  } else if (!preferredName?.trim() && !apiTitle && !scrapedName) {
-    name = await getChannelNameFromRss(channelId, name);
-  }
+  const name = preferredName?.trim() || apiTitle || scrapedName || handle || channelId;
 
   return {
     channel: {
@@ -164,3 +134,4 @@ export async function resolveChannelInput(
     },
   };
 }
+

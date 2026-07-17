@@ -9,7 +9,7 @@ import { VideoGrid } from "@/components/VideoGrid";
 import { ChannelProfileHeaderSkeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
-import { useRSSFeed } from "@/hooks/useRSSFeed";
+import { useFeed } from "@/hooks/useFeed";
 import { filterVideos } from "@/utils/video";
 import type { FeedFilter } from "@/types";
 
@@ -34,7 +34,6 @@ export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClient
     hasMore,
     loadMore,
     refresh,
-    feedSource,
     settings,
     settingsHydrated,
   } = useFeedContext();
@@ -45,7 +44,7 @@ export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClient
     [channels, channelId],
   );
 
-  const fallbackFeed = useRSSFeed(channel ? [channel] : [], settings.youtubeApiKey);
+  const fallbackFeed = useFeed(channel ? [channel] : [], settings.youtubeApiKey);
 
   const cachedChannelVideos = useMemo(
     () => videosByChannel.get(channelId) ?? videos.filter((video) => video.channelId === channelId),
@@ -91,7 +90,6 @@ export function ChannelProfilePageClient({ channelId }: ChannelProfilePageClient
           cachedChannelVideos.length > 0 ? void refresh() : void fallbackFeed.refresh()
         }
         isRefreshing={cachedChannelVideos.length > 0 ? isLoading : fallbackFeed.isLoading}
-        feedSource={cachedChannelVideos.length > 0 ? feedSource : fallbackFeed.feedSource}
       />
 
       {isInitialLoading ? (

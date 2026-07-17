@@ -17,7 +17,6 @@ export function ChannelsPageClient() {
     videosByChannel,
     isLoading,
     refresh,
-    feedSource,
     settingsHydrated,
   } = useFeedContext();
   const pullToRefresh = usePullToRefresh({ onRefresh: refresh });
@@ -46,7 +45,6 @@ export function ChannelsPageClient() {
         title="Subscriptions"
         onRefresh={() => void refresh()}
         isRefreshing={isLoading}
-        feedSource={feedSource}
       />
 
       <main className="space-y-6 px-4 py-4">

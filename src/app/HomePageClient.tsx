@@ -28,7 +28,6 @@ export function HomePageClient() {
     loadMore,
     error,
     refresh,
-    feedSource,
     settings,
     settingsHydrated,
     filter,
@@ -90,7 +89,6 @@ export function HomePageClient() {
         title="Home"
         onRefresh={() => void refresh()}
         isRefreshing={isLoading}
-        feedSource={feedSource}
       />
 
       <MetalRatesChip />

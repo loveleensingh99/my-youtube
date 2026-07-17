@@ -16,7 +16,6 @@ export interface FeedBatchResult {
   cursor: FeedCursor;
   hasMore: boolean;
   errors: string[];
-  source: "api" | "rss";
 }
 
 export interface FeedState {

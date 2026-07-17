@@ -7,7 +7,7 @@ import { LongFormWatch } from "@/components/LongFormWatch";
 import { ErrorState } from "@/components/ErrorState";
 import { useFeedContext } from "@/components/FeedProvider";
 import { WatchPageSkeleton } from "@/components/Skeleton";
-import { fetchVideoDetails } from "@/app/actions/rss";
+import { fetchVideoDetails } from "@/app/actions/feed";
 import { createFallbackWatchVideo, filterWatchPlaylist, isValidVideoId } from "@/utils/video";
 import type { Video } from "@/types";
 

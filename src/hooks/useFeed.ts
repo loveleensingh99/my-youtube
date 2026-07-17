@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchFeedBatch } from "@/app/actions/rss";
+import { fetchFeedBatch } from "@/app/actions/feed";
 import type { FeedCursor } from "@/types/feed";
 import type { Channel, Video } from "@/types";
 
-const RSS_FETCH_TIMEOUT_MS = 30000;
 const API_FETCH_TIMEOUT_MS = 45000;
 
 function mergeVideos(existing: Video[], incoming: Video[]): Video[] {
@@ -23,14 +22,13 @@ function mergeVideos(existing: Video[], incoming: Video[]): Video[] {
   );
 }
 
-export function useRSSFeed(channels: Channel[], youtubeApiKey = "") {
+export function useFeed(channels: Channel[], youtubeApiKey = "") {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
-  const [feedSource, setFeedSource] = useState<"api" | "rss">("rss");
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const channelsRef = useRef(channels);
   const apiKeyRef = useRef(youtubeApiKey);
@@ -38,7 +36,7 @@ export function useRSSFeed(channels: Channel[], youtubeApiKey = "") {
   const requestIdRef = useRef(0);
   const channelsKey = useMemo(() => channels.map((channel) => channel.id).join("|"), [channels]);
   const fetchKey = useMemo(
-    () => `${channelsKey}:${youtubeApiKey.trim() ? "api" : "rss"}`,
+    () => `${channelsKey}:${youtubeApiKey.trim()}`,
     [channelsKey, youtubeApiKey],
   );
 
@@ -52,14 +50,12 @@ export function useRSSFeed(channels: Channel[], youtubeApiKey = "") {
     requestIdRef.current = requestId;
     const activeChannels = channelsRef.current;
     const activeApiKey = apiKeyRef.current.trim();
-    const timeoutMs = activeApiKey ? API_FETCH_TIMEOUT_MS : RSS_FETCH_TIMEOUT_MS;
 
     if (activeChannels.length === 0) {
       setVideos([]);
       setErrors([]);
       setHasMore(false);
       cursorRef.current = null;
-      setFeedSource(activeApiKey ? "api" : "rss");
       return true;
     }
 
@@ -67,7 +63,7 @@ export function useRSSFeed(channels: Channel[], youtubeApiKey = "") {
       const result = await Promise.race([
         fetchFeedBatch(activeChannels, activeApiKey || null, cursor),
         new Promise<never>((_, reject) => {
-          window.setTimeout(() => reject(new Error("Feed request timed out")), timeoutMs);
+          window.setTimeout(() => reject(new Error("Feed request timed out")), API_FETCH_TIMEOUT_MS);
         }),
       ]);
 
@@ -77,10 +73,11 @@ export function useRSSFeed(channels: Channel[], youtubeApiKey = "") {
       setErrors(result.errors);
       setHasMore(result.hasMore);
       cursorRef.current = result.cursor;
-      setFeedSource(result.source);
 
       if (result.videos.length === 0 && result.errors.length > 0 && !append) {
-        setError(result.errors[0] ?? "Unable to load feeds. Check your API key and internet connection.");
+        setError(
+          result.errors[0] ?? "Unable to load feeds. Check your API key and internet connection.",
+        );
       } else {
         setError(null);
         if (!append) {
@@ -144,7 +141,6 @@ export function useRSSFeed(channels: Channel[], youtubeApiKey = "") {
     loadMore,
     error,
     errors,
-    feedSource,
     lastUpdated,
     refresh,
   };

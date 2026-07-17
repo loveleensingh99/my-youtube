@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { AppLogoMark } from "@/components/AppLogoMark";
 import { APP_NAME } from "@/constants/app";
 import { Button } from "@/components/ui/button";
-import { FeedSourceBadge } from "@/components/FeedSourceBadge";
 import { useSideNav } from "@/components/SideNav";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +13,6 @@ interface HeaderProps {
   onBack?: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
-  feedSource?: "api" | "rss";
   className?: string;
 }
 
@@ -23,7 +21,6 @@ export function Header({
   onBack,
   onRefresh,
   isRefreshing = false,
-  feedSource,
   className,
 }: HeaderProps) {
   const pathname = usePathname();
@@ -66,7 +63,6 @@ export function Header({
         {showMenu ? <AppLogoMark className="h-7 w-7 shrink-0" /> : null}
         <div className="flex min-w-0 items-center gap-2">
           <p className="truncate text-base font-semibold tracking-tight">{title ?? APP_NAME}</p>
-          {feedSource ? <FeedSourceBadge source={feedSource} /> : null}
         </div>
       </div>
 

@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { resolveChannelInput } from "@/app/actions/channels";
-import { useRSSFeed } from "@/hooks/useRSSFeed";
+import { useFeed } from "@/hooks/useFeed";
 import { useSettings } from "@/hooks/useSettings";
 import { useFilters } from "@/hooks/useFilters";
 import { useRefresh } from "@/hooks/useRefresh";
@@ -29,7 +29,6 @@ interface FeedContextValue {
   loadMore: () => Promise<void>;
   error: string | null;
   errors: string[];
-  feedSource: "api" | "rss";
   lastUpdated: string | null;
   refresh: () => Promise<void>;
   lastUpdatedLabel: string;
@@ -98,7 +97,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     [channels],
   );
 
-  const feed = useRSSFeed(channelsToFetch, settings.youtubeApiKey);
+  const feed = useFeed(channelsToFetch, settings.youtubeApiKey);
   const refreshState = useRefresh({
     settings,
     lastUpdated: feed.lastUpdated,
@@ -140,7 +139,6 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       loadMore: feed.loadMore,
       error: feed.error,
       errors: feed.errors,
-      feedSource: feed.feedSource,
       lastUpdated: feed.lastUpdated,
       refresh: refreshState.refresh,
       lastUpdatedLabel: refreshState.lastUpdatedLabel,
@@ -179,7 +177,6 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       feed.loadMore,
       feed.error,
       feed.errors,
-      feed.feedSource,
       feed.lastUpdated,
       refreshState.refresh,
       refreshState.lastUpdatedLabel,
