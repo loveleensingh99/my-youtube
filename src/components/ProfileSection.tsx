@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface ProfileSectionProps {
+  id?: string;
   title: string;
   description: string;
   icon: ReactNode;
@@ -16,6 +17,7 @@ interface ProfileSectionProps {
 }
 
 export function ProfileSection({
+  id,
   title,
   description,
   icon,
@@ -25,7 +27,10 @@ export function ProfileSection({
   className,
 }: ProfileSectionProps) {
   return (
-    <Card className={cn("overflow-hidden border-border/60 bg-card/40", className)}>
+    <Card
+      id={id}
+      className={cn("scroll-mt-24 overflow-hidden border-border/60 bg-card/40", className)}
+    >
       <CardHeader className="space-y-4 border-b border-border/40 bg-muted/10 pb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">

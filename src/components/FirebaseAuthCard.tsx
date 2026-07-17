@@ -47,7 +47,7 @@ export function FirebaseAuthCard() {
   };
 
   return (
-    <Card>
+    <Card id="account" className="scroll-mt-24">
       <CardHeader>
         <CardTitle>Account</CardTitle>
         

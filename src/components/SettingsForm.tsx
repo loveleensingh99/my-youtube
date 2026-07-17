@@ -25,7 +25,7 @@ interface SettingsFormProps {
 
 export function SettingsForm({ settings, onUpdate, onReset }: SettingsFormProps) {
   return (
-    <div className="space-y-6">
+    <div id="settings" className="scroll-mt-24 space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Feed</CardTitle>

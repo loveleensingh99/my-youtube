@@ -13,6 +13,7 @@ export function ChannelManager() {
 
   return (
     <ProfileSection
+      id="subscriptions"
       title="Subscriptions"
       description="Channels that appear in your Home feed and Subs list."
       icon={<ListVideo className="h-5 w-5" />}

@@ -86,7 +86,7 @@ export function DataBackupCard() {
   };
 
   return (
-    <Card>
+    <Card id="backup" className="scroll-mt-24">
       <CardHeader>
         <CardTitle>Backup</CardTitle>
         <CardDescription>

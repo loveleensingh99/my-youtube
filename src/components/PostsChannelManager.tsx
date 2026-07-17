@@ -17,6 +17,7 @@ export function PostsChannelManager({ onChanged }: PostsChannelManagerProps) {
 
   return (
     <ProfileSection
+      id="posts"
       title="Posts"
       description="Channels whose community posts appear on the Posts tab."
       icon={<MessageSquareText className="h-5 w-5" />}

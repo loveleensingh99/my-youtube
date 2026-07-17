@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { ChannelManager } from "@/components/ChannelManager";
 import { DataBackupCard } from "@/components/DataBackupCard";
 import { FirebaseAuthCard } from "@/components/FirebaseAuthCard";
@@ -12,9 +13,26 @@ import { SettingsPageSkeleton } from "@/components/Skeleton";
 import { TagManager } from "@/components/TagManager";
 import { useFeedContext } from "@/components/FeedProvider";
 
+function scrollToProfileHash() {
+  const id = window.location.hash.replace(/^#/, "");
+  if (!id) return;
+
+  requestAnimationFrame(() => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 export function SettingsPageClient() {
   const { settings, updateSettings, resetSettings, refresh, isLoading, settingsHydrated } =
     useFeedContext();
+
+  useEffect(() => {
+    if (!settingsHydrated) return;
+
+    scrollToProfileHash();
+    window.addEventListener("hashchange", scrollToProfileHash);
+    return () => window.removeEventListener("hashchange", scrollToProfileHash);
+  }, [settingsHydrated]);
 
   if (!settingsHydrated) {
     return <SettingsPageSkeleton />;

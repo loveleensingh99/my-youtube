@@ -123,6 +123,7 @@ export function TagManager() {
 
   return (
     <ProfileSection
+      id="tags"
       title="Tags"
       description="Rename a tag once to update it across all subscriptions and posts channels."
       icon={<Tags className="h-5 w-5" />}
